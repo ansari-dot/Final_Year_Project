@@ -1,0 +1,6 @@
+{
+  "name": "ReWearX",
+  "description": "Circular fashion exchange platform. Swap clothes, share style, no money required.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
