@@ -1,0 +1,67 @@
+'use strict';
+
+const baseLayout = (title, body) => `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>${title}</title></head>
+<body style="font-family:Arial,sans-serif;background:#f4f6f8;margin:0;padding:0;">
+  <div style="max-width:600px;margin:24px auto;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+    <div style="background:linear-gradient(90deg,#10b981,#0ea5a4);padding:24px;color:#fff;">
+      <h1 style="margin:0;font-size:22px;">ReWearX</h1>
+      <p style="margin:4px 0 0;opacity:.85;">AI-Powered Clothing Barter Platform</p>
+    </div>
+    <div style="padding:24px;color:#1f2937;line-height:1.6;">
+      ${body}
+    </div>
+    <div style="padding:16px 24px;background:#f9fafb;color:#6b7280;font-size:12px;text-align:center;">
+      &copy; ${new Date().getFullYear()} ReWearX. All rights reserved.
+    </div>
+  </div>
+</body></html>`;
+
+const verifyEmail = (name, verifyUrl) =>
+  baseLayout(
+    'Verify your email',
+    `<h2 style="margin-top:0;">Welcome, ${name}!</h2>
+     <p>Thanks for joining ReWearX. Please verify your email to start swapping clothes.</p>
+     <p style="text-align:center;margin:24px 0;">
+       <a href="${verifyUrl}" style="background:#10b981;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block;">Verify Email</a>
+     </p>
+     <p style="font-size:13px;color:#6b7280;">If the button doesn't work, copy this link:<br>${verifyUrl}</p>
+     <p style="font-size:13px;color:#6b7280;">This link expires in 24 hours.</p>`
+  );
+
+const passwordReset = (name, resetUrl) =>
+  baseLayout(
+    'Reset your password',
+    `<h2 style="margin-top:0;">Hi ${name},</h2>
+     <p>We received a request to reset your ReWearX password.</p>
+     <p style="text-align:center;margin:24px 0;">
+       <a href="${resetUrl}" style="background:#ef4444;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block;">Reset Password</a>
+     </p>
+     <p style="font-size:13px;color:#6b7280;">If you didn't request this, ignore this email.</p>
+     <p style="font-size:13px;color:#6b7280;">This link expires in 24 hours.</p>`
+  );
+
+const swapNotification = (name, type, details) => {
+  const titles = {
+    swap_request: 'New Swap Request',
+    swap_accepted: 'Swap Request Accepted',
+    swap_rejected: 'Swap Request Rejected',
+    swap_completed: 'Swap Completed',
+  };
+  return baseLayout(
+    titles[type] || 'Swap Update',
+    `<h2 style="margin-top:0;">Hi ${name},</h2>
+     <p>${details}</p>
+     <p style="font-size:13px;color:#6b7280;">Login to ReWearX to view details.</p>`
+  );
+};
+
+const genericNotification = (name, title, body) =>
+  baseLayout(title, `<h2 style="margin-top:0;">Hi ${name},</h2><p>${body}</p>`);
+
+module.exports = {
+  verifyEmail,
+  passwordReset,
+  swapNotification,
+  genericNotification,
+};
