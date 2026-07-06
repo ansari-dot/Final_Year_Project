@@ -4,6 +4,8 @@ import Dashboard from './pages/Dashboard';
 import Users from './pages/Users';
 import Reports from './pages/Reports';
 import Analytics from './pages/Analytics';
+import HeroSection from './pages/HeroSection';
+import Categories from './pages/Categories';
 import Login from './pages/Login';
 import { ToastProvider } from './components/Toast';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -29,6 +31,8 @@ function ProtectedShell() {
         <Route path="/users" component={Users} />
         <Route path="/reports" component={Reports} />
         <Route path="/analytics" component={Analytics} />
+        <Route path="/categories" component={Categories} />
+        <Route path="/hero-section" component={HeroSection} />
         <Route>
           <div className="text-center py-20">
             <h2 className="font-headings text-3xl font-bold text-primary">Page not found</h2>

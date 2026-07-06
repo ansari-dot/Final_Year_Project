@@ -2,24 +2,57 @@ import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { motion, useScroll, useTransform } from 'motion/react';
 
-const heroImages = [
-  "https://images.unsplash.com/photo-1490481651829-192e10e425ce?auto=format&fit=crop&q=80&w=2070",
-  "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&q=80&w=2070",
-  "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=2000",
-  "https://images.unsplash.com/photo-1581044777550-4cfa60707c03?auto=format&fit=crop&q=80&w=2070"
+interface HeroBanner {
+  id: number;
+  imageUrl: string;
+  title?: string | null;
+  subtitle?: string | null;
+  displayOrder: number;
+}
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
+
+// Fallback images in case API fails
+const fallbackImages = [
+  "/assets/h1.png",
+  "/assets/h2.png",
+  "/assets/h3.png",
+  "/assets/h4.png"
 ];
 
 export default function HeroSection() {
+  const [heroImages, setHeroImages] = useState<string[]>(fallbackImages);
+  const [banners, setBanners] = useState<HeroBanner[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const { scrollY } = useScroll();
   const y = useTransform(scrollY, [0, 1000], ["0%", "20%"]);
+
+  useEffect(() => {
+    // Fetch hero banners from API
+    const fetchBanners = async () => {
+      try {
+        const response = await fetch(`${API_URL}/hero-banners/active`);
+        const data = await response.json();
+        
+        if (data.success && data.data && data.data.length > 0) {
+          setBanners(data.data);
+          setHeroImages(data.data.map((b: HeroBanner) => b.imageUrl));
+        }
+      } catch (error) {
+        console.error('Failed to fetch hero banners:', error);
+        // Will use fallback images
+      }
+    };
+
+    fetchBanners();
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentImageIndex((prev) => (prev + 1) % heroImages.length);
     }, 6000);
     return () => clearInterval(timer);
-  }, []);
+  }, [heroImages.length]);
 
   const nextSlide = () => setCurrentImageIndex((prev) => (prev + 1) % heroImages.length);
   const prevSlide = () => setCurrentImageIndex((prev) => (prev - 1 + heroImages.length) % heroImages.length);
