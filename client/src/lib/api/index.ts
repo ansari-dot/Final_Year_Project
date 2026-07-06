@@ -10,3 +10,4 @@ export { savedApi } from './saved';
 export { recommendationsApi } from './recommendations';
 export { reviewsApi } from './reviews';
 export { reportsApi } from './reports';
+export { swapperOfWeekApi } from './swapperOfWeek';

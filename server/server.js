@@ -6,6 +6,7 @@ const env = require('./config/env');
 const logger = require('./utils/logger');
 const { connectDB, syncDB } = require('./config/database');
 const { initSocketIO } = require('./sockets');
+const { initCronJobs } = require('./utils/cronJobs');
 
 const PORT = env.port;
 
@@ -30,6 +31,9 @@ const start = async () => {
 
     const io = initSocketIO(server);
     app.set('io', io);
+
+    // Initialize cron jobs
+    initCronJobs();
 
     server.listen(PORT, () => {
       logger.info(`ReWearX Backend running on http://localhost:${PORT}`);

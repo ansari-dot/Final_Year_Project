@@ -2,6 +2,7 @@ import { useRef, useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Award, ChevronLeft, ChevronRight, Star } from 'lucide-react';
 import { Link } from 'wouter';
+import { swapperOfWeekApi, type SwapperOfWeek } from '../../lib/api';
 
 const SwapperCardSkeleton = () => (
   <div className="bg-white rounded-2xl p-4 sm:p-5 border border-border/50 shadow-sm flex flex-col h-full relative w-full animate-pulse">
@@ -26,22 +27,22 @@ const SwapperCardSkeleton = () => (
   </div>
 );
 
-const swappers = [
-  { id: 1, name: 'Emma Chamberlain', username: '@emmachamb', image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=300&h=300', swaps: 42, rating: 4.9, badge: 'Trendsetter' },
-  { id: 2, name: 'Marcus Johnson', username: '@marcusj', image: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=300&h=300', swaps: 38, rating: 5.0, badge: 'Top Swapper' },
-  { id: 3, name: 'Sophia Chen', username: '@sophiac', image: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=300&h=300', swaps: 31, rating: 4.8, badge: 'Vintage Lover' },
-  { id: 4, name: 'Alex Rodriguez', username: '@alexr', image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=300&h=300', swaps: 27, rating: 4.7, badge: 'Fast Responder' },
-  { id: 5, name: 'Mia Taylor', username: '@miataylor', image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=300&h=300', swaps: 24, rating: 4.9, badge: 'Stylist' },
-  { id: 6, name: 'David Kim', username: '@davidk', image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=300&h=300', swaps: 22, rating: 5.0, badge: 'Friendly' },
-];
-
 export default function SwapperOfTheWeek() {
   const [isLoading, setIsLoading] = useState(true);
+  const [swappers, setSwappers] = useState<SwapperOfWeek[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1500);
-    return () => clearTimeout(timer);
+    swapperOfWeekApi
+      .list()
+      .then((data) => {
+        setSwappers(data);
+        setIsLoading(false);
+      })
+      .catch(() => {
+        setSwappers([]);
+        setIsLoading(false);
+      });
   }, []);
 
   const scroll = (direction: 'left' | 'right') => {
@@ -53,6 +54,11 @@ export default function SwapperOfTheWeek() {
       });
     }
   };
+
+  // Don't show section if no swappers
+  if (!isLoading && swappers.length === 0) {
+    return null;
+  }
 
   return (
     <section className="bg-[#fdfdfc] border-b border-border/40 overflow-hidden relative">
@@ -127,7 +133,13 @@ export default function SwapperOfTheWeek() {
 
                       <div className="flex items-center gap-3.5 sm:gap-4 mb-4 sm:mb-5 mt-0.5">
                         <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden shrink-0 border-2 border-white shadow-md relative group-hover:border-primary/10 transition-colors">
-                          <img src={swapper.image} alt={swapper.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                          {swapper.image ? (
+                            <img src={swapper.image} alt={swapper.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                          ) : (
+                            <div className="w-full h-full bg-primary/10 flex items-center justify-center">
+                              <span className="text-primary text-xl font-bold">{swapper.name.charAt(0)}</span>
+                            </div>
+                          )}
                         </div>
                         <div className="flex-1 min-w-0">
                           <h3 className="font-headings font-bold text-sm sm:text-base text-primary leading-tight group-hover:text-accent transition-colors truncate">

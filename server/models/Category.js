@@ -10,6 +10,7 @@ module.exports = (sequelize) => {
       name: { type: DataTypes.STRING(100), allowNull: false, unique: true },
       description: { type: DataTypes.STRING(500), allowNull: true },
       iconUrl: { type: DataTypes.STRING(500), allowNull: true, field: 'icon_url' },
+      cloudinaryPublicId: { type: DataTypes.STRING(255), allowNull: true, field: 'cloudinary_public_id' },
       isActive: { type: DataTypes.BOOLEAN, defaultValue: true, field: 'is_active' },
     },
     { tableName: 'categories', indexes: [{ fields: ['is_active'] }] }

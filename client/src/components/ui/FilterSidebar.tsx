@@ -1,6 +1,8 @@
 import { ChevronDown, X } from 'lucide-react';
-import { useState, type ReactNode } from 'react';
-import { categories, sizes, conditions, genders, colors } from '../../lib/mockData';
+import { useState, useEffect, type ReactNode } from 'react';
+import { sizes, conditions, genders, colors } from '../../lib/mockData';
+import { categoriesApi } from '../../lib/api';
+import type { ApiCategory } from '../../lib/api/types';
 
 export interface BrowseFilters {
   categories: string[];
@@ -54,6 +56,22 @@ export default function FilterSidebar({
   mobile,
   onClose,
 }: FilterSidebarProps) {
+  const [categories, setCategories] = useState<string[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+
+  useEffect(() => {
+    categoriesApi
+      .list()
+      .then((cats) => {
+        setCategories(cats.map((c) => c.name));
+        setLoadingCategories(false);
+      })
+      .catch(() => {
+        setCategories([]);
+        setLoadingCategories(false);
+      });
+  }, []);
+
   const toggle = (key: keyof BrowseFilters, value: string) => {
     if (key === 'brand') return;
     const arr = filters[key] as string[];
@@ -91,20 +109,26 @@ export default function FilterSidebar({
       </div>
 
       <Section title="Category">
-        {categories.map((c) => (
-          <label
-            key={c}
-            className="flex items-center gap-2.5 text-sm text-primary/80 cursor-pointer hover:text-primary"
-          >
-            <input
-              type="checkbox"
-              checked={filters.categories.includes(c)}
-              onChange={() => toggle('categories', c)}
-              className="w-4 h-4 rounded border-border accent-accent"
-            />
-            {c}
-          </label>
-        ))}
+        {loadingCategories ? (
+          <p className="text-xs text-muted-foreground italic">Loading categories...</p>
+        ) : categories.length === 0 ? (
+          <p className="text-xs text-muted-foreground italic">No categories available</p>
+        ) : (
+          categories.map((c) => (
+            <label
+              key={c}
+              className="flex items-center gap-2.5 text-sm text-primary/80 cursor-pointer hover:text-primary"
+            >
+              <input
+                type="checkbox"
+                checked={filters.categories.includes(c)}
+                onChange={() => toggle('categories', c)}
+                className="w-4 h-4 rounded border-border accent-accent"
+              />
+              {c}
+            </label>
+          ))
+        )}
       </Section>
 
       <Section title="Size">

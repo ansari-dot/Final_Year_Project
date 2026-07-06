@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
 import { authApi } from '../lib/api/auth';
-import { tokenStore, userStore } from '../lib/api/client';
+import { tokenStore, userStore, http } from '../lib/api/client';
 import type { ApiUser } from '../lib/api/types';
 
 interface AuthContextValue {
@@ -10,6 +10,7 @@ interface AuthContextValue {
   signIn: (email: string, password: string) => Promise<ApiUser>;
   signOut: () => Promise<void>;
   refresh: () => Promise<ApiUser | null>;
+  apiCall: (path: string, method?: string, body?: any, isFormData?: boolean) => Promise<any>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -65,6 +66,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   };
 
+  const apiCall = async (
+    path: string,
+    method: string = 'GET',
+    body?: any,
+    isFormData: boolean = false
+  ): Promise<any> => {
+    try {
+      let result;
+      
+      if (isFormData && body instanceof FormData) {
+        result = method === 'PUT' ? await http.upload(path, body, 'PUT') : await http.upload(path, body, 'POST');
+      } else {
+        switch (method.toUpperCase()) {
+          case 'GET':
+            result = await http.get(path);
+            break;
+          case 'POST':
+            result = await http.post(path, body);
+            break;
+          case 'PUT':
+            result = await http.put(path, body);
+            break;
+          case 'PATCH':
+            result = await http.put(path, body); // Use PUT for PATCH
+            break;
+          case 'DELETE':
+            result = await http.delete(path);
+            break;
+          default:
+            result = await http.get(path);
+        }
+      }
+      
+      // Return standardized response
+      return {
+        success: true,
+        data: result
+      };
+    } catch (error: any) {
+      // Re-throw with error details
+      throw {
+        success: false,
+        message: error.message || 'An error occurred',
+        details: error.details
+      };
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -74,6 +123,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signIn,
         signOut,
         refresh,
+        apiCall,
       }}
     >
       {children}

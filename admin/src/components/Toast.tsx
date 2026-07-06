@@ -6,6 +6,7 @@ type ToastType = 'success' | 'error' | 'info';
 
 interface ToastCtx {
   toast: (msg: string, type?: ToastType) => void;
+  showToast: (msg: string, type?: ToastType) => void;
 }
 
 const Ctx = createContext<ToastCtx | null>(null);
@@ -25,7 +26,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <Ctx.Provider value={{ toast }}>
+    <Ctx.Provider value={{ toast, showToast: toast }}>
       {children}
       <div className="fixed bottom-6 right-6 z-[100] flex flex-col gap-3 pointer-events-none">
         <AnimatePresence>

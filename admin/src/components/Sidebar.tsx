@@ -7,6 +7,8 @@ import {
   BarChart3,
   RefreshCw,
   LogOut,
+  Image,
+  FolderTree,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { adminApi } from '../lib/api/admin';
@@ -16,6 +18,8 @@ const NAV = [
   { href: '/users', label: 'Users', icon: Users },
   { href: '/reports', label: 'Reports', icon: ShieldAlert },
   { href: '/analytics', label: 'Analytics', icon: BarChart3 },
+  { href: '/categories', label: 'Categories', icon: FolderTree },
+  { href: '/hero-section', label: 'Hero Section', icon: Image },
 ];
 
 const FALLBACK_AVATAR =
