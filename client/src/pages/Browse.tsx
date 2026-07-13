@@ -9,7 +9,6 @@ import { categories } from '../lib/mockData';
 import type { Item as UIItem } from '../lib/mockData';
 import { itemsApi, savedApi, categoriesApi } from '../lib/api';
 import { adaptItem, ApiCategory, apiConditionFromUI, apiGenderFromUI } from '../lib/api/types';
-import { useDebounced } from '../lib/hooks';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import type { Pagination as ApiPagination } from '../lib/api/client';
@@ -28,7 +27,8 @@ export default function Browse() {
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
   const [query, setQuery] = useState('');
-  const debouncedQuery = useDebounced(query, 400);
+  const [submittedQuery, setSubmittedQuery] = useState('');
+  const [isNlpSearch, setIsNlpSearch] = useState(false);
   const [filters, setFilters] = useState<BrowseFilters>(emptyFilters);
   const [sort, setSort] = useState<'newest' | 'relevant' | 'az'>('newest');
   const [page, setPage] = useState(1);
@@ -56,6 +56,11 @@ export default function Browse() {
       .catch(() => undefined);
   }, [isAuthenticated]);
 
+  const handleSearch = () => {
+    setPage(1);
+    setSubmittedQuery(query.trim());
+  };
+
   const categoryNameToId = useMemo(() => {
     const map = new Map<string, number>();
     apiCategories.forEach((c) => map.set(c.name, c.id));
@@ -67,63 +72,69 @@ export default function Browse() {
     setLoading(true);
     setError(null);
 
-    const apiFilters: Record<string, unknown> = {
-      page,
-      limit: PAGE_SIZE,
-    };
-    if (debouncedQuery) apiFilters.q = debouncedQuery;
-    if (filters.brand) apiFilters.brand = filters.brand;
-    if (filters.categories.length === 1) {
-      const id = categoryNameToId.get(filters.categories[0]);
-      if (id) apiFilters.categoryId = id;
+    const wordCount = submittedQuery.trim().split(/\s+/).filter(Boolean).length;
+    const useNlp = wordCount >= 2;
+    setIsNlpSearch(useNlp);
+
+    if (useNlp) {
+      itemsApi
+        .nlpSearch(submittedQuery, page, PAGE_SIZE)
+        .then(({ items: list, pagination: p }) => {
+          if (cancelled) return;
+          setItems(list.map((i) => adaptItem(i, i.matchScore)));
+          setPagination(p);
+          setLoading(false);
+        })
+        .catch((err: Error) => {
+          if (cancelled) return;
+          setError(err.message);
+          setLoading(false);
+        });
+    } else {
+      const apiFilters: Record<string, unknown> = { page, limit: PAGE_SIZE };
+      if (submittedQuery) apiFilters.q = submittedQuery;
+      if (filters.brand) apiFilters.brand = filters.brand;
+      if (filters.categories.length === 1) {
+        const id = categoryNameToId.get(filters.categories[0]);
+        if (id) apiFilters.categoryId = id;
+      }
+      if (filters.genders.length === 1) {
+        apiFilters.gender = apiGenderFromUI(filters.genders[0] as UIItem['gender']);
+      }
+      if (filters.conditions.length === 1) {
+        apiFilters.condition = apiConditionFromUI(filters.conditions[0] as UIItem['condition']);
+      }
+      if (filters.sizes.length === 1) apiFilters.size = filters.sizes[0];
+      if (filters.colors.length === 1) apiFilters.color = filters.colors[0];
+
+      itemsApi
+        .list(apiFilters)
+        .then(({ items: list, pagination: p }) => {
+          if (cancelled) return;
+          let mapped = list.map((i) => adaptItem(i));
+          if (filters.categories.length > 1)
+            mapped = mapped.filter((i) => filters.categories.includes(i.category));
+          if (filters.sizes.length > 1)
+            mapped = mapped.filter((i) => filters.sizes.includes(i.size));
+          if (filters.conditions.length > 1)
+            mapped = mapped.filter((i) => filters.conditions.includes(i.condition));
+          if (filters.colors.length > 1)
+            mapped = mapped.filter((i) => filters.colors.includes(i.color));
+          if (sort === 'az')
+            mapped = [...mapped].sort((a, b) => a.title.localeCompare(b.title));
+          setItems(mapped);
+          setPagination(p);
+          setLoading(false);
+        })
+        .catch((err: Error) => {
+          if (cancelled) return;
+          setError(err.message);
+          setLoading(false);
+        });
     }
-    if (filters.genders.length === 1) {
-      apiFilters.gender = apiGenderFromUI(filters.genders[0] as UIItem['gender']);
-    }
-    if (filters.conditions.length === 1) {
-      apiFilters.condition = apiConditionFromUI(filters.conditions[0] as UIItem['condition']);
-    }
-    if (filters.sizes.length === 1) apiFilters.size = filters.sizes[0];
-    if (filters.colors.length === 1) apiFilters.color = filters.colors[0];
 
-    itemsApi
-      .list(apiFilters)
-      .then(({ items: list, pagination: p }) => {
-        if (cancelled) return;
-        let mapped = list.map((i) => adaptItem(i));
-
-        // Client-side multi-select narrowing for filters the API treats single-valued
-        if (filters.categories.length > 1) {
-          mapped = mapped.filter((i) => filters.categories.includes(i.category));
-        }
-        if (filters.sizes.length > 1) {
-          mapped = mapped.filter((i) => filters.sizes.includes(i.size));
-        }
-        if (filters.conditions.length > 1) {
-          mapped = mapped.filter((i) => filters.conditions.includes(i.condition));
-        }
-        if (filters.colors.length > 1) {
-          mapped = mapped.filter((i) => filters.colors.includes(i.color));
-        }
-
-        if (sort === 'az') {
-          mapped = [...mapped].sort((a, b) => a.title.localeCompare(b.title));
-        }
-
-        setItems(mapped);
-        setPagination(p);
-        setLoading(false);
-      })
-      .catch((err: Error) => {
-        if (cancelled) return;
-        setError(err.message);
-        setLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [debouncedQuery, filters, sort, page, categoryNameToId]);
+    return () => { cancelled = true; };
+  }, [submittedQuery, filters, sort, page, categoryNameToId]);
 
   const onToggleSaved = async (id: string) => {
     if (!isAuthenticated) {
@@ -190,16 +201,21 @@ export default function Browse() {
           <div className="relative max-w-xl mx-auto">
             <input
               value={query}
-              onChange={(e) => {
-                setQuery(e.target.value);
-                setPage(1);
-              }}
-              placeholder="Search by title, brand or keyword…"
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+              placeholder="Try: 'warm clothes for cold weather' or search by keyword…"
               className="w-full pl-5 pr-12 py-3 rounded-full text-primary text-sm shadow-lg border border-white/30 bg-white focus:outline-none focus:ring-4 focus:ring-accent/30 transition-all"
             />
-            <button className="absolute right-1.5 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-accent text-accent-foreground flex items-center justify-center hover:scale-105 transition-transform">
+            <button
+              onClick={handleSearch}
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-accent text-accent-foreground flex items-center justify-center hover:scale-105 transition-transform">
               <Search size={15} />
             </button>
+            {isNlpSearch && (
+              <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-bold text-white/80 uppercase tracking-widest whitespace-nowrap">
+                ✦ AI search active
+              </span>
+            )}
           </div>
           <div className="flex gap-1.5 mt-4 flex-wrap justify-center">
             {['All', ...heroCategories].map((c) => {

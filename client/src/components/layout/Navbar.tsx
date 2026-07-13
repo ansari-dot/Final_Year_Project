@@ -1,6 +1,5 @@
 import {
   RefreshCw,
-  Search,
   Menu,
   X,
   ChevronDown,
@@ -32,8 +31,18 @@ export default function Navbar() {
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isLargeScreen, setIsLargeScreen] = useState(false);
+  const [isBrowseOpen, setIsBrowseOpen] = useState(false);
+  const browseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
+
+  const openBrowse = () => {
+    if (browseTimeoutRef.current) clearTimeout(browseTimeoutRef.current);
+    setIsBrowseOpen(true);
+  };
+  const closeBrowse = () => {
+    browseTimeoutRef.current = setTimeout(() => setIsBrowseOpen(false), 120);
+  };
   const [location, setLocation] = useLocation();
   const { user, isAuthenticated, signOut } = useAuth();
   const [notifications, setNotifications] = useState<UINotification[]>([]);
@@ -186,60 +195,19 @@ export default function Navbar() {
           className="hidden lg:flex items-center gap-8 text-[13px] uppercase tracking-widest font-bold text-primary/70 absolute left-1/2 -translate-x-1/2">
             <Link href="/how-it-works" className="hover:text-primary transition-colors cursor-pointer relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-[2px] after:bg-primary hover:after:w-full after:transition-all after:duration-300 py-4">How It Works</Link>
 
-            <div className="group/nav py-4 justify-center">
-              <Link href="/browse" className="hover:text-primary transition-colors cursor-pointer relative flex items-center gap-1.5 after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-[2px] after:bg-primary group-hover/nav:after:w-full after:transition-all after:duration-300">
+            <div
+              className="py-4 relative"
+              onMouseEnter={openBrowse}
+              onMouseLeave={closeBrowse}
+            >
+              <Link
+                href="/browse"
+                className="hover:text-primary transition-colors cursor-pointer relative flex items-center gap-1.5 after:content-[''] after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:bg-primary after:transition-all after:duration-300"
+                style={{ '--tw-after-w': isBrowseOpen ? '100%' : '0%' } as React.CSSProperties}
+              >
                 Browse
-                <ChevronDown size={14} className="group-hover/nav:rotate-180 transition-transform duration-300" />
+                <ChevronDown size={14} className={`transition-transform duration-300 ${isBrowseOpen ? 'rotate-180' : ''}`} />
               </Link>
-
-              <div className="fixed top-[85px] left-0 right-0 w-full pt-4 opacity-0 invisible group-hover/nav:opacity-100 group-hover/nav:visible transition-all duration-300 transform -translate-y-2 group-hover/nav:translate-y-0 z-40 pointer-events-none group-hover/nav:pointer-events-auto">
-                <div className="w-full bg-white border-y border-border/40 shadow-2xl py-12">
-                  <div className="max-w-7xl mx-auto px-6 md:px-12 grid grid-cols-4 gap-12">
-
-                    {/* Category Link Columns */}
-                    <div className="col-span-3 grid grid-cols-3 gap-8">
-                      <div className="flex flex-col gap-4">
-                        <h3 className="text-[10px] font-black tracking-[0.2em] text-primary/40 uppercase mb-2 border-b border-border/50 pb-2 opacity-0 translate-y-4 group-hover/nav:opacity-100 group-hover/nav:translate-y-0 transition-all duration-500 group-hover/nav:delay-[50ms]">Clothing</h3>
-                        <Link href="/browse" className="text-[13px] font-semibold tracking-wide hover:text-accent transition-colors flex items-center gap-2 group/link opacity-0 translate-y-4 group-hover/nav:opacity-100 group-hover/nav:translate-y-0 transition-all duration-500 group-hover/nav:delay-[100ms]">Tops <ArrowRight size={14} className="opacity-0 -translate-x-4 group-hover/link:opacity-100 group-hover/link:translate-x-0 transition-all text-accent"/></Link>
-                        <Link href="/browse" className="text-[13px] font-semibold tracking-wide hover:text-accent transition-colors flex items-center gap-2 group/link opacity-0 translate-y-4 group-hover/nav:opacity-100 group-hover/nav:translate-y-0 transition-all duration-500 group-hover/nav:delay-[150ms]">Bottoms <ArrowRight size={14} className="opacity-0 -translate-x-4 group-hover/link:opacity-100 group-hover/link:translate-x-0 transition-all text-accent"/></Link>
-                        <Link href="/browse" className="text-[13px] font-semibold tracking-wide hover:text-accent transition-colors flex items-center gap-2 group/link opacity-0 translate-y-4 group-hover/nav:opacity-100 group-hover/nav:translate-y-0 transition-all duration-500 group-hover/nav:delay-[200ms]">Dresses <ArrowRight size={14} className="opacity-0 -translate-x-4 group-hover/link:opacity-100 group-hover/link:translate-x-0 transition-all text-accent"/></Link>
-                        <Link href="/browse" className="text-[13px] font-semibold tracking-wide hover:text-accent transition-colors flex items-center gap-2 group/link opacity-0 translate-y-4 group-hover/nav:opacity-100 group-hover/nav:translate-y-0 transition-all duration-500 group-hover/nav:delay-[250ms]">Outerwear <ArrowRight size={14} className="opacity-0 -translate-x-4 group-hover/link:opacity-100 group-hover/link:translate-x-0 transition-all text-accent"/></Link>
-                      </div>
-
-                      <div className="flex flex-col gap-4">
-                        <h3 className="text-[10px] font-black tracking-[0.2em] text-primary/40 uppercase mb-2 border-b border-border/50 pb-2 opacity-0 translate-y-4 group-hover/nav:opacity-100 group-hover/nav:translate-y-0 transition-all duration-500 group-hover/nav:delay-[150ms]">Shoes & Acc.</h3>
-                        <Link href="/browse" className="text-[13px] font-semibold tracking-wide hover:text-accent transition-colors flex items-center gap-2 group/link opacity-0 translate-y-4 group-hover/nav:opacity-100 group-hover/nav:translate-y-0 transition-all duration-500 group-hover/nav:delay-[200ms]">Footwear <ArrowRight size={14} className="opacity-0 -translate-x-4 group-hover/link:opacity-100 group-hover/link:translate-x-0 transition-all text-accent"/></Link>
-                        <Link href="/browse" className="text-[13px] font-semibold tracking-wide hover:text-accent transition-colors flex items-center gap-2 group/link opacity-0 translate-y-4 group-hover/nav:opacity-100 group-hover/nav:translate-y-0 transition-all duration-500 group-hover/nav:delay-[250ms]">Bags <ArrowRight size={14} className="opacity-0 -translate-x-4 group-hover/link:opacity-100 group-hover/link:translate-x-0 transition-all text-accent"/></Link>
-                        <Link href="/browse" className="text-[13px] font-semibold tracking-wide hover:text-accent transition-colors flex items-center gap-2 group/link opacity-0 translate-y-4 group-hover/nav:opacity-100 group-hover/nav:translate-y-0 transition-all duration-500 group-hover/nav:delay-[300ms]">Jewelry <ArrowRight size={14} className="opacity-0 -translate-x-4 group-hover/link:opacity-100 group-hover/link:translate-x-0 transition-all text-accent"/></Link>
-                        <Link href="/browse" className="text-[13px] font-semibold tracking-wide hover:text-accent transition-colors flex items-center gap-2 group/link opacity-0 translate-y-4 group-hover/nav:opacity-100 group-hover/nav:translate-y-0 transition-all duration-500 group-hover/nav:delay-[350ms]">Accessories <ArrowRight size={14} className="opacity-0 -translate-x-4 group-hover/link:opacity-100 group-hover/link:translate-x-0 transition-all text-accent"/></Link>
-                      </div>
-
-                      <div className="flex flex-col gap-4">
-                        <h3 className="text-[10px] font-black tracking-[0.2em] text-primary/40 uppercase mb-2 border-b border-border/50 pb-2 opacity-0 translate-y-4 group-hover/nav:opacity-100 group-hover/nav:translate-y-0 transition-all duration-500 group-hover/nav:delay-[250ms]">Collections</h3>
-                        <Link href="/browse" className="text-[13px] font-semibold tracking-wide hover:text-accent transition-colors flex items-center gap-2 group/link opacity-0 translate-y-4 group-hover/nav:opacity-100 group-hover/nav:translate-y-0 transition-all duration-500 group-hover/nav:delay-[300ms]">Vintage <ArrowRight size={14} className="opacity-0 -translate-x-4 group-hover/link:opacity-100 group-hover/link:translate-x-0 transition-all text-accent"/></Link>
-                        <Link href="/browse" className="text-[13px] font-semibold tracking-wide hover:text-accent transition-colors flex items-center gap-2 group/link opacity-0 translate-y-4 group-hover/nav:opacity-100 group-hover/nav:translate-y-0 transition-all duration-500 group-hover/nav:delay-[350ms]">Designer <ArrowRight size={14} className="opacity-0 -translate-x-4 group-hover/link:opacity-100 group-hover/link:translate-x-0 transition-all text-accent"/></Link>
-                        <Link href="/browse" className="text-[13px] font-semibold tracking-wide hover:text-accent transition-colors flex items-center gap-2 group/link opacity-0 translate-y-4 group-hover/nav:opacity-100 group-hover/nav:translate-y-0 transition-all duration-500 group-hover/nav:delay-[400ms]">Y2K Era <ArrowRight size={14} className="opacity-0 -translate-x-4 group-hover/link:opacity-100 group-hover/link:translate-x-0 transition-all text-accent"/></Link>
-                        <Link href="/browse" className="text-[13px] font-semibold tracking-wide hover:text-accent transition-colors flex items-center gap-2 group/link opacity-0 translate-y-4 group-hover/nav:opacity-100 group-hover/nav:translate-y-0 transition-all duration-500 group-hover/nav:delay-[450ms]">Streetwear <ArrowRight size={14} className="opacity-0 -translate-x-4 group-hover/link:opacity-100 group-hover/link:translate-x-0 transition-all text-accent"/></Link>
-                      </div>
-                    </div>
-
-                    {/* Featured Highlight */}
-                    <div className="col-span-1 border-l border-border/50 pl-12 flex flex-col gap-4 opacity-0 translate-y-4 group-hover/nav:opacity-100 group-hover/nav:translate-y-0 transition-all duration-500 group-hover/nav:delay-[350ms]">
-                      <h3 className="text-[10px] font-black tracking-[0.2em] text-primary/40 uppercase mb-2">Featured</h3>
-                      <Link href="/browse">
-                        <div className="group cursor-pointer rounded-2xl overflow-hidden relative aspect-[4/5] shadow-sm transform hover:scale-[1.02] hover:shadow-xl transition-all duration-500">
-                          <img src="https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&q=80&w=300&h=400" alt="Summer Collection" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out" />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-5">
-                            <span className="text-white text-[10px] font-bold uppercase tracking-widest mb-1.5 opacity-90">Trend Alert</span>
-                            <span className="text-white font-headings font-bold text-lg leading-tight group-hover:text-accent transition-colors">Summer<br/>Dresses</span>
-                          </div>
-                        </div>
-                      </Link>
-                    </div>
-
-                  </div>
-                </div>
-              </div>
             </div>
 
             <Link href="/about" className="hover:text-primary transition-colors cursor-pointer relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-[2px] after:bg-primary hover:after:w-full after:transition-all after:duration-300 py-4">About</Link>
@@ -259,18 +227,6 @@ export default function Navbar() {
           transition={{ duration: 0.2, ease: 'easeOut' }}
           className="flex items-center gap-4"
         >
-          
-          {/* Animated Elegant Search Bar */}
-          <div className="relative hidden xl:flex items-center group">
-            <input 
-              type="text" 
-              placeholder="Search swaps..." 
-              className="pl-5 pr-10 py-2.5 rounded-full bg-white/40 border border-white/60 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white/80 w-48 focus:w-64 transition-all duration-300 placeholder:text-primary/50 font-medium shadow-inner"
-            />
-            <button className="absolute right-3 text-primary/50 group-hover:text-primary transition-colors p-1 flex items-center justify-center">
-              <Search size={16} />
-            </button>
-          </div>
           
           {/* Authentication Actions */}
           {!isAuthenticated && (
@@ -482,6 +438,156 @@ export default function Navbar() {
         </AnimatePresence>
 
       </motion.div>
+
+      {/* ── Full-width Browse Mega Menu ── */}
+      <AnimatePresence>
+        {isBrowseOpen && !shouldCollapse && (
+          <motion.div
+            key="mega-menu"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.22, ease: 'easeOut' }}
+            className="fixed left-0 right-0 top-[72px] sm:top-[80px] md:top-[88px] z-40 pointer-events-auto"
+            onMouseEnter={openBrowse}
+            onMouseLeave={closeBrowse}
+          >
+            {/* Backdrop blur strip */}
+            <div className="w-full bg-white/95 backdrop-blur-2xl border-y border-border/40 shadow-[0_20px_60px_rgba(0,0,0,0.10)]">
+              <div className="max-w-7xl mx-auto px-6 md:px-12 py-10 md:py-12">
+                <div className="grid grid-cols-12 gap-8 md:gap-12">
+
+                  {/* ── Col 1: Clothing ── */}
+                  <div className="col-span-3">
+                    <p className="text-[9px] font-black tracking-[0.25em] text-primary/35 uppercase mb-4 pb-2.5 border-b border-border/50">Clothing</p>
+                    <div className="flex flex-col gap-1">
+                      {['Tops', 'Bottoms', 'Dresses', 'Outerwear', 'Activewear', 'Swimwear'].map((item, i) => (
+                        <motion.div
+                          key={item}
+                          initial={{ opacity: 0, x: -8 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.25, delay: i * 0.04 }}
+                        >
+                          <Link
+                            href="/browse"
+                            onClick={() => setIsBrowseOpen(false)}
+                            className="group/link flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-accent/6 transition-all duration-200"
+                          >
+                            <span className="text-[13px] font-semibold text-primary/80 group-hover/link:text-accent transition-colors">{item}</span>
+                            <ArrowRight size={13} className="text-accent opacity-0 -translate-x-2 group-hover/link:opacity-100 group-hover/link:translate-x-0 transition-all duration-200" />
+                          </Link>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* ── Col 2: Shoes & Accessories ── */}
+                  <div className="col-span-3">
+                    <p className="text-[9px] font-black tracking-[0.25em] text-primary/35 uppercase mb-4 pb-2.5 border-b border-border/50">Shoes & Accessories</p>
+                    <div className="flex flex-col gap-1">
+                      {['Footwear', 'Bags & Purses', 'Jewelry', 'Belts', 'Hats & Caps', 'Sunglasses'].map((item, i) => (
+                        <motion.div
+                          key={item}
+                          initial={{ opacity: 0, x: -8 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.25, delay: 0.06 + i * 0.04 }}
+                        >
+                          <Link
+                            href="/browse"
+                            onClick={() => setIsBrowseOpen(false)}
+                            className="group/link flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-accent/6 transition-all duration-200"
+                          >
+                            <span className="text-[13px] font-semibold text-primary/80 group-hover/link:text-accent transition-colors">{item}</span>
+                            <ArrowRight size={13} className="text-accent opacity-0 -translate-x-2 group-hover/link:opacity-100 group-hover/link:translate-x-0 transition-all duration-200" />
+                          </Link>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* ── Col 3: Collections ── */}
+                  <div className="col-span-3">
+                    <p className="text-[9px] font-black tracking-[0.25em] text-primary/35 uppercase mb-4 pb-2.5 border-b border-border/50">Collections</p>
+                    <div className="flex flex-col gap-1">
+                      {[
+                        { label: 'Vintage', badge: 'Hot' },
+                        { label: 'Designer', badge: '' },
+                        { label: 'Y2K Era', badge: 'Trending' },
+                        { label: 'Streetwear', badge: '' },
+                        { label: 'Minimalist', badge: '' },
+                        { label: 'Cottagecore', badge: 'New' },
+                      ].map((item, i) => (
+                        <motion.div
+                          key={item.label}
+                          initial={{ opacity: 0, x: -8 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.25, delay: 0.12 + i * 0.04 }}
+                        >
+                          <Link
+                            href="/browse"
+                            onClick={() => setIsBrowseOpen(false)}
+                            className="group/link flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-accent/6 transition-all duration-200"
+                          >
+                            <span className="text-[13px] font-semibold text-primary/80 group-hover/link:text-accent transition-colors flex items-center gap-2">
+                              {item.label}
+                              {item.badge && (
+                                <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-accent/10 text-accent border border-accent/20">
+                                  {item.badge}
+                                </span>
+                              )}
+                            </span>
+                            <ArrowRight size={13} className="text-accent opacity-0 -translate-x-2 group-hover/link:opacity-100 group-hover/link:translate-x-0 transition-all duration-200" />
+                          </Link>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* ── Col 4: Featured Card ── */}
+                  <motion.div
+                    className="col-span-3 border-l border-border/40 pl-8 md:pl-10 flex flex-col gap-5"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.18 }}
+                  >
+                    <p className="text-[9px] font-black tracking-[0.25em] text-primary/35 uppercase pb-2.5 border-b border-border/50">Featured Drop</p>
+
+                    <Link href="/browse" onClick={() => setIsBrowseOpen(false)} className="group/feat block">
+                      <div className="relative rounded-2xl overflow-hidden aspect-[3/4] shadow-md group-hover/feat:shadow-2xl transition-shadow duration-500">
+                        <img
+                          src="https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&q=80&w=400&h=520"
+                          alt="Featured"
+                          className="w-full h-full object-cover group-hover/feat:scale-105 transition-transform duration-700 ease-out"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/15 to-transparent" />
+                        <div className="absolute bottom-0 left-0 right-0 p-5">
+                          <span className="text-white/70 text-[9px] font-black uppercase tracking-[0.22em] block mb-1">Trend Alert</span>
+                          <span className="text-white font-headings font-bold text-xl leading-tight block group-hover/feat:text-accent/90 transition-colors">
+                            Summer<br />Dresses
+                          </span>
+                          <span className="inline-flex items-center gap-1.5 mt-3 text-white/80 text-[11px] font-semibold group-hover/feat:text-white transition-colors">
+                            Shop Now <ArrowRight size={12} />
+                          </span>
+                        </div>
+                      </div>
+                    </Link>
+
+                    <Link
+                      href="/browse"
+                      onClick={() => setIsBrowseOpen(false)}
+                      className="flex items-center justify-between px-4 py-3 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-colors group/all"
+                    >
+                      <span className="text-[11px] font-bold uppercase tracking-[0.16em]">View All Items</span>
+                      <ArrowRight size={13} className="group-hover/all:translate-x-1 transition-transform" />
+                    </Link>
+                  </motion.div>
+
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {isMobileMenuOpen && (

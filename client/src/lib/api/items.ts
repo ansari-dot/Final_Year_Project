@@ -27,6 +27,8 @@ export interface CreateItemPayload {
 export const itemsApi = {
   list: (filters: ItemFilters = {}) => paginated<ApiItem>('/items', filters as Record<string, unknown>),
   search: (filters: ItemFilters = {}) => paginated<ApiItem>('/search', filters as Record<string, unknown>),
+  nlpSearch: (query: string, page = 1, limit = 20) =>
+    paginated<ApiItem>(`/nlp-search`, { q: query, page, limit }),
   byUser: (userId: string | number, page = 1, limit = 20) =>
     paginated<ApiItem>(`/items/user/${userId}`, { page, limit }),
   byId: (id: string | number) => http.get<ApiItem>(`/items/${id}`),

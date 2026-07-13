@@ -74,6 +74,7 @@ export interface ApiItem {
   images?: ApiImage[];
   category?: ApiCategory;
   owner?: ApiUser;
+  matchScore?: number;
 }
 
 export interface ApiSwap {
@@ -240,7 +241,7 @@ export const adaptItem = (i: ApiItem, score?: number): UIItem => ({
   is_available: i.isAvailable,
   user_id: String(i.userId),
   createdAt: i.createdAt?.slice(0, 10) || '',
-  matchScore: score !== undefined ? Math.round(score * 100) : undefined,
+  matchScore: (score !== undefined ? score : i.matchScore) !== undefined ? Math.round((score !== undefined ? score : i.matchScore!) * 100) : undefined,
   owner: i.owner
     ? {
         id: String(i.owner.id),

@@ -14,8 +14,10 @@ router.use('/saved', require('./saved.routes'));
 router.use('/categories', require('./categories.routes'));
 router.use('/recommendations', require('./recommendations.routes'));
 router.use('/search', require('./search.routes'));
+router.use('/nlp-search', require('./nlpSearch.routes'));
 router.use('/hero-banners', require('./heroBanners.routes'));
 router.use('/swapper-of-week', require('./swapperOfWeek.routes'));
+router.use('/featured-items', require('./featuredItems.routes'));
 router.use('/admin', require('./admin.routes'));
 
 router.get('/', (_req, res) =>
