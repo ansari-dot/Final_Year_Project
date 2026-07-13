@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { ArrowRight, Heart, RefreshCw } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useToast } from '../../contexts/ToastContext';
+import { featuredItemsApi } from '../../lib/api';
+import type { FeaturedItem } from '../../lib/api/featuredItems';
 
 const SwapCardSkeleton = () => (
   <div className="bg-background rounded-2xl overflow-hidden shadow-sm flex flex-col font-body animate-pulse border border-border/40 w-full">
@@ -28,7 +30,27 @@ const SwapCardSkeleton = () => (
 
 export default function FeaturedSwaps() {
   const [isLoading, setIsLoading] = useState(true);
+  const [items, setItems] = useState<FeaturedItem[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    // Fetch 4 random featured items from the dedicated API
+    featuredItemsApi
+      .list()
+      .then((fetchedItems) => {
+        console.log('Featured items fetched:', fetchedItems);
+        setItems(fetchedItems);
+        setError(null);
+        setIsLoading(false);
+      })
+      .catch((err) => {
+        console.error('Failed to fetch featured items:', err);
+        setError(err.message || 'Failed to load items');
+        setItems([]);
+        setIsLoading(false);
+      });
+  }, []);
 
   const handleWishlist = (title: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -39,50 +61,6 @@ export default function FeaturedSwaps() {
     e.stopPropagation();
     toast(`Swap request sent for "${title}".`, 'success');
   };
-
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1500);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const swaps = [
-    {
-      title: "Zara Trench Coat",
-      owner: "Sophie L.",
-      ownerImg: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=100",
-      lookingFor: "Arket Knit Cardigan",
-      imgSrc: "https://images.unsplash.com/photo-1559551409-dadc959f76b8?auto=format&fit=crop&q=80&w=600",
-      lookingForImg: "https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&q=80&w=150",
-      condition: "Excellent",
-    },
-    {
-      title: "A.P.C. Leather Bag",
-      owner: "James K.",
-      ownerImg: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=100",
-      lookingFor: "COS Tote Bag",
-      imgSrc: "https://images.unsplash.com/photo-1590874103328-eac38a683ce7?auto=format&fit=crop&q=80&w=600",
-      lookingForImg: "https://images.unsplash.com/photo-1591561954557-26941169b49e?auto=format&fit=crop&q=80&w=150",
-      condition: "Like New",
-    },
-    {
-      title: "& Other Stories Knit",
-      owner: "Maya R.",
-      ownerImg: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&q=80&w=100",
-      lookingFor: "Massimo Dutti Blazer",
-      imgSrc: "https://images.unsplash.com/photo-1620799140188-3b2a02fd9a77?auto=format&fit=crop&q=80&w=600",
-      lookingForImg: "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&q=80&w=150",
-      condition: "Good",
-    },
-    {
-      title: "Levi's 501 Jeans",
-      owner: "Daniel K.",
-      ownerImg: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=100",
-      lookingFor: "Uniqlo Linen Shirt",
-      imgSrc: "https://images.unsplash.com/photo-1602293589930-45aad59ba3ab?auto=format&fit=crop&q=80&w=600",
-      lookingForImg: "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?auto=format&fit=crop&q=80&w=150",
-      condition: "Vintage",
-    },
-  ];
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -139,15 +117,25 @@ export default function FeaturedSwaps() {
                   <SwapCardSkeleton />
                 </motion.div>
               ))
-            : swaps.map((item, i) => (
+            : error
+            ? <div className="col-span-full text-center py-12">
+                <p className="text-red-600 font-semibold">{error}</p>
+                <p className="text-muted-foreground text-sm mt-2">Please try refreshing the page</p>
+              </div>
+            : items.length === 0
+            ? <div className="col-span-full text-center py-12">
+                <p className="text-muted-foreground font-semibold">No items available yet</p>
+                <p className="text-muted-foreground text-sm mt-2">Check back soon for featured swaps!</p>
+              </div>
+            : items.map((item, i) => (
                 <motion.div
                   variants={itemVariants}
-                  key={`item-${i}`}
+                  key={`item-${item.id}`}
                   className="group relative bg-background rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:shadow-primary/10 transition-all duration-500 flex flex-col font-body border border-border/60 hover:-translate-y-1.5 hover:border-primary/10 w-full"
                 >
                   <div className="relative aspect-[4/3] bg-muted overflow-hidden">
                     <img
-                      src={item.imgSrc}
+                      src={item.images[0] || '/placeholder.jpg'}
                       alt={item.title}
                       className="w-full h-full object-cover transform transition-transform duration-1000 ease-out group-hover:scale-[1.03]"
                     />
@@ -180,7 +168,11 @@ export default function FeaturedSwaps() {
                   <div className="p-3.5 sm:p-4 flex flex-col gap-2.5 sm:gap-3 flex-1 relative z-10 bg-background">
                     <div className="flex flex-col gap-1">
                       <div className="flex items-center gap-1.5 text-muted-foreground">
-                        <img src={item.ownerImg} alt={item.owner} className="w-4 h-4 rounded-full object-cover ring-2 ring-background shadow-sm" />
+                        <img 
+                          src={item.ownerImage || '/default-avatar.png'} 
+                          alt={item.owner} 
+                          className="w-4 h-4 rounded-full object-cover ring-2 ring-background shadow-sm" 
+                        />
                         <span className="text-[10px] font-semibold tracking-wide text-primary">{item.owner}</span>
                       </div>
                       <h3 className="font-headings text-sm sm:text-base font-bold text-primary truncate group-hover:text-accent transition-colors">
@@ -193,14 +185,18 @@ export default function FeaturedSwaps() {
                         <div className="flex flex-col min-w-0">
                           <span className="flex items-center gap-1 text-[9px] text-muted-foreground font-bold uppercase tracking-widest mb-0.5">
                             <RefreshCw size={9} className="text-accent" />
-                            Looking for
+                            Category
                           </span>
                           <span className="text-xs sm:text-[13px] text-primary font-bold truncate group-hover/looking:text-accent transition-colors">
-                            {item.lookingFor}
+                            {item.category}
                           </span>
                         </div>
                         <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border-2 border-background shadow-md transform group-hover/looking:scale-110 transition-transform duration-300 relative ml-2.5">
-                          <img src={item.lookingForImg} alt={item.lookingFor} className="w-full h-full object-cover" />
+                          <img 
+                            src={item.images[1] || item.images[0] || '/placeholder.jpg'} 
+                            alt={item.category} 
+                            className="w-full h-full object-cover" 
+                          />
                           <div className="absolute inset-0 ring-1 ring-inset ring-black/10 rounded-full" />
                         </div>
                       </div>

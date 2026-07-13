@@ -11,3 +11,5 @@ export { recommendationsApi } from './recommendations';
 export { reviewsApi } from './reviews';
 export { reportsApi } from './reports';
 export { swapperOfWeekApi } from './swapperOfWeek';
+export { featuredItemsApi } from './featuredItems';
+export type { FeaturedItem } from './featuredItems';
