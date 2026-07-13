@@ -10,12 +10,14 @@ export interface RegisterPayload {
   dateOfBirth?: string;
 }
 
+export interface RegisterResponse {
+  otpSent: boolean;
+  email: string;
+}
+
 export const authApi = {
-  async register(payload: RegisterPayload): Promise<ApiAuthResponse> {
-    const data = await http.post<ApiAuthResponse>('/auth/register', payload);
-    tokenStore.set(data.accessToken, data.refreshToken);
-    userStore.set(data.user);
-    return data;
+  async register(payload: RegisterPayload): Promise<RegisterResponse> {
+    return http.post<RegisterResponse>('/auth/register', payload, { auth: false });
   },
 
   async login(email: string, password: string): Promise<ApiAuthResponse> {
@@ -55,6 +57,17 @@ export const authApi = {
 
   resendVerification() {
     return http.post('/auth/resend-verification');
+  },
+
+  async verifyOtp(email: string, otp: string): Promise<ApiAuthResponse> {
+    const data = await http.post<ApiAuthResponse>('/auth/verify-otp', { email, otp }, { auth: false });
+    tokenStore.set(data.accessToken, data.refreshToken);
+    userStore.set(data.user);
+    return data;
+  },
+
+  resendOtp(email: string) {
+    return http.post('/auth/resend-otp', { email }, { auth: false });
   },
 
   changePassword(currentPassword: string, newPassword: string) {

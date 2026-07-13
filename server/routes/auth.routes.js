@@ -10,6 +10,10 @@ router.post('/register', authLimiter, validators.register, authController.regist
 router.post('/login', authLimiter, validators.login, authController.login);
 router.post('/logout', authenticate, authController.logout);
 
+// OTP email verification (pre-signup, no auth token yet)
+router.post('/verify-otp', authLimiter, authController.verifyOtp);
+router.post('/resend-otp', authLimiter, authController.resendOtp);
+
 router.post('/forgot-password', authLimiter, validators.forgotPassword, authController.forgotPassword);
 router.post('/reset-password', authLimiter, validators.resetPassword, authController.resetPassword);
 router.get('/verify-email/:token', validators.verifyEmail, authController.verifyEmail);

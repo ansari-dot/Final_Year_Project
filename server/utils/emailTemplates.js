@@ -56,12 +56,31 @@ const swapNotification = (name, type, details) => {
   );
 };
 
+const otpVerification = (name, otp) =>
+  baseLayout(
+    'Your ReWearX verification code',
+    `<h2 style="margin-top:0;">Hi ${name},</h2>
+     <p>Use the code below to verify your email address. It expires in <strong>10 minutes</strong>.</p>
+     <div style="text-align:center;margin:28px 0;">
+       <span style="display:inline-block;background:#f3f4f6;border:2px dashed #10b981;border-radius:12px;padding:16px 40px;font-size:36px;font-weight:700;letter-spacing:12px;color:#10b981;font-family:monospace;">${otp}</span>
+     </div>
+     <p style="font-size:13px;color:#6b7280;">If you didn't create a ReWearX account, you can safely ignore this email.</p>`
+  );
+
 const genericNotification = (name, title, body) =>
-  baseLayout(title, `<h2 style="margin-top:0;">Hi ${name},</h2><p>${body}</p>`);
+  baseLayout(
+    title,
+    `<h2 style="margin-top:0;">Hi ${name},</h2>
+     <p>${body}</p>
+     <p style="font-size:13px;color:#6b7280;">Login to ReWearX for more details.</p>`
+  );
+
+
 
 module.exports = {
   verifyEmail,
   passwordReset,
   swapNotification,
   genericNotification,
+  otpVerification,
 };

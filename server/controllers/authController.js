@@ -5,7 +5,7 @@ const { success, asyncHandler } = require('../utils/response');
 
 const register = asyncHandler(async (req, res) => {
   const result = await authService.register(req.body);
-  return success(res, 201, result, 'Account created. Verification email sent.');
+  return success(res, 201, result, 'OTP sent. Please verify your email to complete registration.');
 });
 
 const login = asyncHandler(async (req, res) => {
@@ -17,6 +17,18 @@ const login = asyncHandler(async (req, res) => {
 const logout = asyncHandler(async (_req, res) => {
   // JWT is stateless. Client deletes token.
   return success(res, 200, null, 'Logged out.');
+});
+
+const verifyOtp = asyncHandler(async (req, res) => {
+  const { email, otp } = req.body;
+  const result = await authService.verifyOtp(email, otp);
+  return success(res, 201, result, 'Email verified. Account created successfully.');
+});
+
+const resendOtp = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+  await authService.resendOtp(email);
+  return success(res, 200, null, 'OTP resent to your email.');
 });
 
 const verifyEmail = asyncHandler(async (req, res) => {
@@ -62,6 +74,8 @@ module.exports = {
   register,
   login,
   logout,
+  verifyOtp,
+  resendOtp,
   verifyEmail,
   resendVerification,
   forgotPassword,

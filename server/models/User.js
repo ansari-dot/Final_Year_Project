@@ -33,6 +33,16 @@ module.exports = (sequelize) => {
         allowNull: true,
         field: 'verification_expires',
       },
+      otpCode: {
+        type: DataTypes.STRING(6),
+        allowNull: true,
+        field: 'otp_code',
+      },
+      otpExpires: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        field: 'otp_expires',
+      },
       resetToken: { type: DataTypes.STRING(255), allowNull: true, field: 'reset_token' },
       resetExpires: { type: DataTypes.DATE, allowNull: true, field: 'reset_expires' },
       role: { type: DataTypes.ENUM('user', 'admin'), defaultValue: 'user' },
@@ -52,6 +62,8 @@ module.exports = (sequelize) => {
             'password',
             'verificationToken',
             'verificationExpires',
+            'otpCode',
+            'otpExpires',
             'resetToken',
             'resetExpires',
           ],
@@ -60,15 +72,7 @@ module.exports = (sequelize) => {
       scopes: {
         withSecrets: { attributes: { include: [] } },
         withPassword: {
-          attributes: {
-            include: [
-              'password',
-              'verificationToken',
-              'verificationExpires',
-              'resetToken',
-              'resetExpires',
-            ],
-          },
+          attributes: { exclude: [] },
         },
       },
     }
@@ -95,6 +99,8 @@ module.exports = (sequelize) => {
     delete values.password;
     delete values.verificationToken;
     delete values.verificationExpires;
+    delete values.otpCode;
+    delete values.otpExpires;
     delete values.resetToken;
     delete values.resetExpires;
     return values;

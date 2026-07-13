@@ -56,7 +56,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 t.type === 'success' 
                   ? 'bg-accent/10 border-accent/20 text-accent-foreground' 
                   : t.type === 'error'
-                  ? 'bg-red-500/10 border-red-500/20 text-red-600 dark:text-red-400'
+                  ? 'bg-red-500/15 border-red-500/30 text-red-500 dark:text-red-400'
                   : 'bg-background/80 border-border text-primary'
               }`}
             >
