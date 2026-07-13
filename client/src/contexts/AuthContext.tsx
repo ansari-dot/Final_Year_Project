@@ -13,7 +13,7 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<UIUser>;
-  signUp: (payload: RegisterPayload) => Promise<UIUser>;
+  signUp: (payload: RegisterPayload) => Promise<string>;
   signOut: () => Promise<void>;
   updateUser: (partial: UpdateProfilePayload) => Promise<UIUser>;
   refresh: () => Promise<UIUser | null>;
@@ -68,11 +68,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return refreshed || adaptUser(data.user);
   };
 
-  const signUp = async (payload: RegisterPayload): Promise<UIUser> => {
+  const signUp = async (payload: RegisterPayload): Promise<string> => {
     const data = await authApi.register(payload);
-    setBoth(data.user);
-    reconnectWithToken();
-    return adaptUser(data.user);
+    return data.email;
   };
 
   const signOut = async (): Promise<void> => {

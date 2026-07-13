@@ -48,13 +48,16 @@ const sendEmail = async (to, subject, html, text = null) => {
     logger.info(`Email sent to ${to}: ${info.messageId}`);
     return info;
   } catch (err) {
-    logger.error(`Email send failed to ${to}:`, err.message);
+    logger.error(`Email send failed to ${to}: ${err.message}`);
     return null;
   }
 };
 
 const sendVerificationEmail = (to, name, verifyUrl) =>
   sendEmail(to, 'Verify your ReWearX account', templates.verifyEmail(name, verifyUrl));
+
+const sendOtpEmail = (to, name, otp) =>
+  sendEmail(to, 'Your ReWearX verification code', templates.otpVerification(name, otp));
 
 const sendPasswordResetEmail = (to, name, resetUrl) =>
   sendEmail(to, 'Reset your ReWearX password', templates.passwordReset(name, resetUrl));
@@ -75,6 +78,7 @@ const sendGenericEmail = (to, name, title, body) =>
 module.exports = {
   sendEmail,
   sendVerificationEmail,
+  sendOtpEmail,
   sendPasswordResetEmail,
   sendSwapNotification,
   sendGenericEmail,

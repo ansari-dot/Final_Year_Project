@@ -33,6 +33,29 @@ const emailRule = body('email')
   .normalizeEmail()
   .isLength({ max: 100 });
 
+// Signup: only well-known real providers allowed — blocks fake/disposable domains
+const ALLOWED_SIGNUP_DOMAINS = new Set([
+  'gmail.com', 'googlemail.com',
+  'yahoo.com', 'yahoo.co.uk', 'yahoo.co.in', 'yahoo.com.au', 'ymail.com',
+  'outlook.com', 'hotmail.com', 'hotmail.co.uk', 'live.com', 'msn.com',
+  'icloud.com', 'me.com', 'mac.com',
+  'protonmail.com', 'proton.me',
+  'zoho.com', 'aol.com', 'mail.com',
+]);
+
+const registerEmailRule = body('email')
+  .isEmail()
+  .withMessage('Invalid email address')
+  .normalizeEmail()
+  .isLength({ max: 100 })
+  .custom((value) => {
+    const domain = value.split('@')[1]?.toLowerCase();
+    if (!domain || !ALLOWED_SIGNUP_DOMAINS.has(domain)) {
+      throw new Error('Please use a real email provider (Gmail, Yahoo, Outlook, iCloud, etc.)');
+    }
+    return true;
+  });
+
 const idParamChain = (name = 'id') =>
   param(name).isInt({ min: 1 }).withMessage(`${name} must be a positive integer`).toInt();
 
@@ -47,7 +70,7 @@ const validators = {
   // ---------- AUTH ----------
   register: [
     body('name').isString().trim().isLength({ min: 2, max: 100 }).withMessage('Name 2-100 chars'),
-    emailRule,
+    registerEmailRule,
     passwordRule,
     body('gender').isIn(['male', 'female', 'other']).withMessage('gender must be male/female/other'),
     body('phone').optional().isString().isLength({ max: 20 }),

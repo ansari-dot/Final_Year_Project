@@ -14,6 +14,10 @@ const env = require('../config/env');
 const emailService = require('./emailService');
 const logger = require('../utils/logger');
 
+// Temporary store for pending registrations (OTP not yet verified).
+// Key: email, Value: { name, email, hashedPassword, gender, phone, dateOfBirth, otp, otpExpires }
+const pendingRegistrations = new Map();
+
 const buildAuthResponse = (user) => {
   const payload = { id: user.id, role: user.role, email: user.email };
   return {
@@ -25,31 +29,83 @@ const buildAuthResponse = (user) => {
 };
 
 const register = async ({ email, password, name, gender, phone, dateOfBirth }) => {
-  const existing = await User.scope('withPassword').findOne({ where: { email } });
+  // Only block if a verified account already exists
+  const existing = await User.findOne({ where: { email, isVerified: true } });
   if (existing) throw ApiError.conflict('Email already registered.');
 
-  const verificationToken = randomToken(32);
-  const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  const otp = String(Math.floor(100000 + Math.random() * 900000));
+  const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-  const user = await User.create({
+  // Hash password now so we're not storing plaintext in memory
+  const bcrypt = require('bcrypt');
+  const hashedPassword = await bcrypt.hash(password, env.bcrypt.saltRounds);
+
+  pendingRegistrations.set(email, {
     name,
     email,
-    password,
+    hashedPassword,
     gender,
     phone: phone || null,
     dateOfBirth: dateOfBirth || null,
-    verificationToken: hashToken(verificationToken),
-    verificationExpires,
+    otp,
+    otpExpires,
   });
+
+  // Auto-clean after 10 minutes
+  setTimeout(() => pendingRegistrations.delete(email), 10 * 60 * 1000);
+
+  await emailService.sendOtpEmail(email, name, otp).catch((err) => {
+    logger.error(`OTP email failed for ${email}: ${err.message}`);
+  });
+
+  return { otpSent: true, email };
+};
+
+const verifyOtp = async (email, otp) => {
+  const pending = pendingRegistrations.get(email);
+  if (!pending) throw ApiError.badRequest('No pending registration found. Please register again.');
+  if (new Date() > new Date(pending.otpExpires)) {
+    pendingRegistrations.delete(email);
+    throw ApiError.badRequest('OTP has expired. Please register again.');
+  }
+  if (pending.otp !== String(otp)) throw ApiError.badRequest('Incorrect OTP. Please try again.');
+
+  // OTP verified — create the account now
+  let user;
+  try {
+    user = await User.create({
+      name: pending.name,
+      email: pending.email,
+      password: pending.hashedPassword,
+      gender: pending.gender,
+      phone: pending.phone,
+      dateOfBirth: pending.dateOfBirth,
+      isVerified: true,
+    });
+  } catch (err) {
+    logger.error(`User.create failed during OTP verify for ${email}: ${err.message}`);
+    throw err;
+  }
 
   await UserPreferences.create({ userId: user.id });
+  pendingRegistrations.delete(email);
 
-  const verifyUrl = `${env.clientUrl}/verify-email/${verificationToken}`;
-  await emailService.sendVerificationEmail(email, name, verifyUrl).catch((err) => {
-    logger.error(`Verification email failed for ${email}: ${err.message}`);
-  });
+  const created = await User.scope('withPassword').findByPk(user.id);
+  if (!created) throw ApiError.internal('User created but could not be fetched.');
+  return buildAuthResponse(created);
+};
 
-  return buildAuthResponse(user);
+const resendOtp = async (email) => {
+  const pending = pendingRegistrations.get(email);
+  if (!pending) throw ApiError.badRequest('No pending registration found. Please register again.');
+
+  const otp = String(Math.floor(100000 + Math.random() * 900000));
+  pending.otp = otp;
+  pending.otpExpires = new Date(Date.now() + 10 * 60 * 1000);
+  pendingRegistrations.set(email, pending);
+
+  await emailService.sendOtpEmail(email, pending.name, otp);
+  return true;
 };
 
 const login = async (email, password) => {
@@ -162,6 +218,8 @@ const changePassword = async (userId, currentPassword, newPassword) => {
 module.exports = {
   register,
   login,
+  verifyOtp,
+  resendOtp,
   verifyEmail,
   resendVerification,
   forgotPassword,
