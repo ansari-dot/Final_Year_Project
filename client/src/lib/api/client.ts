@@ -6,7 +6,22 @@
  * - Multipart form support.
  */
 
-const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1') as string;
+export const getApiUrl = (): string => {
+  const envUrl = (import.meta.env.VITE_API_URL || '/api/v1') as string;
+  // If the web application is served over HTTPS (e.g. Vercel), convert absolute http:// backend URLs to relative /api/v1
+  // to avoid browser Mixed Content blocking and route through Vercel's rewrite proxy seamlessly.
+  if (typeof window !== 'undefined' && window.location.protocol === 'https:' && envUrl.startsWith('http://')) {
+    try {
+      const parsed = new URL(envUrl);
+      return parsed.pathname.startsWith('/api') ? parsed.pathname : '/api/v1';
+    } catch {
+      return '/api/v1';
+    }
+  }
+  return envUrl;
+};
+
+export const API_URL = getApiUrl();
 export const SOCKET_URL = (import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000') as string;
 
 const ACCESS_TOKEN_KEY = 'rwx.accessToken';
@@ -86,7 +101,25 @@ interface RequestOptions {
 }
 
 const buildUrl = (path: string, query?: Record<string, unknown>): string => {
-  const url = new URL((path.startsWith('http') ? '' : API_URL) + path, window.location.origin);
+  const currentApiUrl = getApiUrl();
+  let targetPath = path;
+
+  // If running over HTTPS, ensure path is relative or HTTPS to prevent mixed content blocking
+  if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
+    if (targetPath.startsWith('http://')) {
+      try {
+        const parsed = new URL(targetPath);
+        targetPath = parsed.pathname + parsed.search;
+      } catch {
+        // Fallback
+      }
+    }
+  }
+
+  const base = targetPath.startsWith('http') ? '' : currentApiUrl;
+  const fullPath = (base.endsWith('/') ? base.slice(0, -1) : base) + (targetPath.startsWith('/') ? targetPath : '/' + targetPath);
+  const url = new URL(fullPath, window.location.origin);
+
   if (query) {
     Object.entries(query).forEach(([k, v]) => {
       if (v === undefined || v === null || v === '') return;

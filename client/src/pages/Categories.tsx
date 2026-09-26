@@ -10,7 +10,7 @@ interface Category {
   itemCount?: number;
 }
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
+import { http } from '@/lib/api/client';
 
 export default function Categories() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -22,11 +22,9 @@ export default function Categories() {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch(`${API_URL}/categories`);
-      const data = await response.json();
-      
-      if (data.success && data.data) {
-        setCategories(data.data);
+      const data = await http.get<Category[]>('/categories');
+      if (data) {
+        setCategories(data);
       }
     } catch (error) {
       console.error('Failed to fetch categories:', error);
