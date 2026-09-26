@@ -2,7 +2,7 @@
 
 require('dotenv').config();
 const readline = require('readline');
-const { connectDB, sequelize } = require('../config/database');
+const { connectDB, syncDB, sequelize } = require('../config/database');
 const { User, UserPreferences } = require('../models');
 const logger = require('../utils/logger');
 
@@ -56,8 +56,9 @@ async function run() {
       if (!email) email = '0349ansari@gmail.com';
     }
 
-    // Connect to database
+    // Connect to database and ensure tables exist
     await connectDB();
+    await syncDB();
 
     // Check if user already exists
     let existingUser = await User.scope('withSecrets').findOne({ where: { email } });
