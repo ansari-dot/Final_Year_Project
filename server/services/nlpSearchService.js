@@ -51,7 +51,15 @@ async function rankItems(queryEmbedding, items) {
     query_embedding: queryEmbedding,
     items: items.map((item) => ({
       id: item.id,
-      text: [item.title, item.description, item.brand, item.category?.name, item.color, item.gender]
+      text: [
+        item.title,
+        item.category?.name,
+        item.category?.description,
+        item.description,
+        item.brand,
+        item.color,
+        item.gender,
+      ]
         .filter(Boolean)
         .join('. '),
     })),
@@ -66,7 +74,6 @@ function findExplicitCategory(query, categories) {
   const queryLower = query.toLowerCase();
   for (const category of categories) {
     const catNameLower = category.name.toLowerCase();
-    // Use word boundary regex to match exact category names only
     const regex = new RegExp(`\\b${catNameLower}\\b`, 'i');
     if (regex.test(queryLower)) {
       return category;
@@ -81,12 +88,13 @@ async function nlpSearch(query, excludeUserId, limit = 20) {
     getDistinctColors(),
   ]);
 
-  logger.info(`[NLP] Query: "${query}" | DB categories: ${allCategories.map((c) => c.name).join(', ')}`);
+  logger.info(`[NLP] Query: "${query}" | DB categories count: ${allCategories.length}`);
 
-  // Use DB name + description — admin must add descriptions for best results
+  // Include DB category descriptions for richer semantic understanding
   const categoryList = allCategories.map((c) => ({
+    id: c.id,
     name: c.name,
-    description: c.description || c.name,
+    description: c.description || `${c.name} clothing and fashion apparel`,
   }));
 
   let attributes = {};
@@ -111,16 +119,26 @@ async function nlpSearch(query, excludeUserId, limit = 20) {
     where.userId = { [Op.ne]: Number(excludeUserId) };
   }
 
-  // No category filter — fetch all items and let semantic ranking sort by relevance
-  logger.info(`[NLP] No category filter - semantic ranking across all items`);
-
-  // Only apply explicit attribute filters (color, gender, condition) if query mentions them
+  // 1. Explicit Category Match (e.g. "jacket", "shirt")
   const explicitCategory = findExplicitCategory(query, allCategories);
   if (explicitCategory) {
     where.categoryId = explicitCategory.id;
-    logger.info(`[NLP] EXPLICIT CATEGORY DETECTED: "${explicitCategory.name}"`);
+    logger.info(`[NLP] EXPLICIT CATEGORY MATCH: "${explicitCategory.name}" (ID: ${explicitCategory.id})`);
+  } else {
+    // 2. Dynamic Semantic Category Match (e.g. "warm clothes" matching Jackets/Hoodies via AI score >= 0.78)
+    const topMatchedCategory = (attributes.category || []).find((c) => c.score >= 0.78);
+    if (topMatchedCategory) {
+      const catObj = allCategories.find((c) => c.name.toLowerCase() === topMatchedCategory.name.toLowerCase());
+      if (catObj) {
+        // Match this category or its subcategories dynamically
+        const subCatIds = allCategories.filter((c) => c.parentId === catObj.id).map((c) => c.id);
+        where.categoryId = { [Op.in]: [catObj.id, ...subCatIds] };
+        logger.info(`[NLP] DYNAMIC SEMANTIC CATEGORY MATCH: "${catObj.name}" with subcategories: [${subCatIds.join(', ')}]`);
+      }
+    }
   }
 
+  // Apply high-confidence gender/condition/color attribute filters dynamically
   const topGender = (attributes.gender || []).find((g) => g.score >= 0.85);
   if (topGender) where.gender = { [Op.in]: [topGender.name, 'unisex'] };
 
@@ -130,7 +148,7 @@ async function nlpSearch(query, excludeUserId, limit = 20) {
   const topColor = (attributes.color || []).find((c) => c.score >= 0.84);
   if (topColor) where.color = { [Op.like]: `%${topColor.name}%` };
 
-  logger.info(`[NLP] WHERE: ${JSON.stringify(where)}`);
+  logger.info(`[NLP] WHERE Clause: ${JSON.stringify(where)}`);
 
   const dbItems = await ClothingItem.findAll({
     where,
@@ -139,7 +157,7 @@ async function nlpSearch(query, excludeUserId, limit = 20) {
     limit: 100,
   });
 
-  logger.info(`[NLP] DB items found: ${dbItems.length}`);
+  logger.info(`[NLP] DB candidates found: ${dbItems.length}`);
   if (!dbItems.length) return [];
 
   if (!queryEmbedding) return dbItems.slice(0, limit);
@@ -150,17 +168,18 @@ async function nlpSearch(query, excludeUserId, limit = 20) {
     const scored = dbItems.map((item) => ({ ...item.toJSON(), matchScore: rankMap.get(item.id) ?? 0 }));
 
     const topScore = Math.max(...scored.map((i) => i.matchScore));
-    // If query is specific (top score >= 0.80), use strict threshold 0.70
-    // If query is vague (top score < 0.80), only show items within 0.05 of the top score
-    const threshold = topScore >= 0.80 ? 0.70 : topScore - 0.05;
-    logger.info(`[NLP] topScore: ${topScore.toFixed(3)}, threshold applied: ${threshold.toFixed(3)}`);
+    // Dynamic relative threshold: Keep items scoring at least 70% of top match or minimum 0.50
+    const minThreshold = 0.50;
+    const dynamicThreshold = Math.max(minThreshold, topScore * 0.70);
+
+    logger.info(`[NLP] topScore: ${topScore.toFixed(3)}, threshold applied: ${dynamicThreshold.toFixed(3)}`);
 
     return scored
-      .filter((item) => item.matchScore >= threshold)
+      .filter((item) => item.matchScore >= dynamicThreshold)
       .sort((a, b) => b.matchScore - a.matchScore)
       .slice(0, limit);
   } catch (err) {
-    logger.warn(`[NLP] Ranking failed, using DB order: ${err.message}`);
+    logger.warn(`[NLP] Semantic ranking failed, returning DB candidates: ${err.message}`);
     return dbItems.slice(0, limit).map((item) => ({ ...item.toJSON(), matchScore: 0 }));
   }
 }
