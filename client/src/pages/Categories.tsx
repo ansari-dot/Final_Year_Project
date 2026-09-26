@@ -10,7 +10,7 @@ interface Category {
   itemCount?: number;
 }
 
-import { http } from '@/lib/api/client';
+import { http } from '../lib/api/client';
 
 export default function Categories() {
   const [categories, setCategories] = useState<Category[]>([]);
