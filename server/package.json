@@ -9,6 +9,7 @@
     "dev": "nodemon server.js",
     "db:migrate": "mysql -u %DB_USER% -p%DB_PASSWORD% < scripts/migrate.sql",
     "db:seed": "node utils/seed.js",
+    "create:admin": "node scripts/createAdmin.js",
     "db:sync:alter": "node utils/sync.js alter",
     "db:sync:force": "node utils/sync.js force"
   },

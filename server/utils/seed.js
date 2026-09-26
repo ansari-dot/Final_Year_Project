@@ -53,8 +53,8 @@ const CATEGORIES_DATA = [
   },
 ];
 
-const ADMIN_EMAIL = process.env.SEED_ADMIN_EMAIL || 'admin@rewearx.com';
-const ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD || 'Admin@123456';
+const ADMIN_EMAIL = process.env.SEED_ADMIN_EMAIL || '0349ansari@gmail.com';
+const ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD || 'Arsu123@';
 
 const run = async () => {
   try {
