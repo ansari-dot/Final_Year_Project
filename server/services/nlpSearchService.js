@@ -119,23 +119,13 @@ async function nlpSearch(query, excludeUserId, limit = 20) {
     where.userId = { [Op.ne]: Number(excludeUserId) };
   }
 
-  // 1. Explicit Category Match (e.g. "jacket", "shirt")
+  // Only apply category filter if user explicitly typed an actual category name (e.g. "jacket", "shirt", "lehenga")
   const explicitCategory = findExplicitCategory(query, allCategories);
   if (explicitCategory) {
     where.categoryId = explicitCategory.id;
     logger.info(`[NLP] EXPLICIT CATEGORY MATCH: "${explicitCategory.name}" (ID: ${explicitCategory.id})`);
   } else {
-    // 2. Dynamic Semantic Category Match (e.g. "warm clothes" matching Jackets/Hoodies via AI score >= 0.78)
-    const topMatchedCategory = (attributes.category || []).find((c) => c.score >= 0.78);
-    if (topMatchedCategory) {
-      const catObj = allCategories.find((c) => c.name.toLowerCase() === topMatchedCategory.name.toLowerCase());
-      if (catObj) {
-        // Match this category or its subcategories dynamically
-        const subCatIds = allCategories.filter((c) => c.parentId === catObj.id).map((c) => c.id);
-        where.categoryId = { [Op.in]: [catObj.id, ...subCatIds] };
-        logger.info(`[NLP] DYNAMIC SEMANTIC CATEGORY MATCH: "${catObj.name}" with subcategories: [${subCatIds.join(', ')}]`);
-      }
-    }
+    logger.info(`[NLP] General/Occasion query detected ("${query}"). Searching across descriptions & titles in ALL categories.`);
   }
 
   // Apply high-confidence gender/condition/color attribute filters dynamically
