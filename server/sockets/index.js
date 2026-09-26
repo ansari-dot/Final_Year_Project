@@ -10,7 +10,18 @@ const notificationService = require('../services/notificationService');
 const initSocketIO = (httpServer) => {
   const io = new Server(httpServer, {
     cors: {
-      origin: env.corsOrigins,
+      origin: (origin, callback) => {
+        if (!origin) return callback(null, true);
+        if (env.corsOrigins.includes('*')) return callback(null, true);
+        if (env.corsOrigins.includes(origin)) return callback(null, true);
+        try {
+          const hostname = new URL(origin).hostname;
+          if (hostname.endsWith('.vercel.app') || hostname === 'localhost') {
+            return callback(null, true);
+          }
+        } catch (_) {}
+        return callback(null, false);
+      },
       credentials: true,
       methods: ['GET', 'POST'],
     },

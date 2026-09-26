@@ -9,6 +9,12 @@ const corsOptions = {
     if (!origin) return callback(null, true);
     if (env.corsOrigins.includes('*')) return callback(null, true);
     if (env.corsOrigins.includes(origin)) return callback(null, true);
+    try {
+      const hostname = new URL(origin).hostname;
+      if (hostname.endsWith('.vercel.app') || hostname === 'localhost') {
+        return callback(null, true);
+      }
+    } catch (_) {}
     logger.warn(`CORS blocked origin: ${origin}`);
     return callback(new Error(`CORS policy: Origin ${origin} not allowed.`), false);
   },
