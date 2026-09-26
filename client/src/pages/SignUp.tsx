@@ -91,7 +91,7 @@ export default function SignUp() {
       await authApi.verifyOtp(registeredEmail, code);
       await refresh();
       toast(`Welcome to ReWearX, ${registeredName}!`, 'success');
-      navigate('/home');
+      navigate('/browse');
     } catch (err) {
       const message = err instanceof ApiError ? err.message : 'Verification failed.';
       setError(message);
@@ -127,7 +127,7 @@ export default function SignUp() {
   const labelClass = 'text-[11px] sm:text-sm font-bold uppercase tracking-wider text-primary/80';
 
   return (
-    <div className="min-h-screen pt-24 sm:pt-28 md:pt-32 pb-10 sm:pb-12 flex items-center justify-center bg-background">
+    <div className="min-h-[calc(100vh-120px)] py-8 sm:py-12 flex items-center justify-center bg-background">
       <div className="max-w-6xl w-full mx-auto px-4 sm:px-6 md:px-8 grid lg:grid-cols-2 gap-10 lg:gap-20 xl:gap-24 items-center">
 
         {/* Form Column */}

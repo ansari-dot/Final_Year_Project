@@ -136,9 +136,37 @@ export default function Chat({ params }: ChatProps) {
   const [loadingMsgs, setLoadingMsgs] = useState(false);
   const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
   const [lastSeenById, setLastSeenById] = useState<Record<string, string>>({});
+  const [navHeight, setNavHeight] = useState<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Measure dynamic navbar height so chat layout is perfectly positioned below navbar
+  useEffect(() => {
+    const updateNavHeight = () => {
+      const headerEl = document.querySelector('header');
+      if (headerEl) {
+        setNavHeight(headerEl.clientHeight);
+      }
+    };
+
+    updateNavHeight();
+
+    const headerEl = document.querySelector('header');
+    if (!headerEl) return;
+
+    const observer = new ResizeObserver(() => {
+      updateNavHeight();
+    });
+
+    observer.observe(headerEl);
+    window.addEventListener('resize', updateNavHeight);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', updateNavHeight);
+    };
+  }, []);
 
   const conv = useMemo(
     () => convs.find((c) => c.ui.id === conversationId),
@@ -758,7 +786,10 @@ export default function Chat({ params }: ChatProps) {
   );
 
   return (
-    <div className="fixed inset-0 top-0 flex bg-background pt-[68px] sm:pt-[72px]">
+    <div
+      className="fixed inset-0 top-0 flex bg-background pt-[125px] sm:pt-[136px]"
+      style={{ paddingTop: navHeight ? `${navHeight}px` : undefined }}
+    >
       <aside
         className={`${
           conversationId ? 'hidden md:flex' : 'flex'

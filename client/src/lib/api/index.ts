@@ -13,3 +13,4 @@ export { reportsApi } from './reports';
 export { swapperOfWeekApi } from './swapperOfWeek';
 export { featuredItemsApi } from './featuredItems';
 export type { FeaturedItem } from './featuredItems';
+export { disputesApi } from './disputes';

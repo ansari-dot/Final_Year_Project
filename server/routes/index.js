@@ -18,6 +18,7 @@ router.use('/nlp-search', require('./nlpSearch.routes'));
 router.use('/hero-banners', require('./heroBanners.routes'));
 router.use('/swapper-of-week', require('./swapperOfWeek.routes'));
 router.use('/featured-items', require('./featuredItems.routes'));
+router.use('/disputes', require('./disputeRoutes'));
 router.use('/admin', require('./admin.routes'));
 
 router.get('/', (_req, res) =>

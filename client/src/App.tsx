@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Route, Switch } from 'wouter';
+import { Route, Switch, Redirect } from 'wouter';
 import MainLayout from './layouts/MainLayout';
 import Home from './pages/Home';
 import AboutUs from './pages/AboutUs';
@@ -19,6 +19,7 @@ import ListingForm from './pages/ListingForm';
 import Profile from './pages/Profile';
 import Swaps from './pages/Swaps';
 import SwapDetail from './pages/SwapDetail';
+import Disputes from './pages/Disputes';
 import Chat from './pages/Chat';
 import Notifications from './pages/Notifications';
 import Saved from './pages/Saved';
@@ -44,7 +45,9 @@ export default function App() {
             <Route path="/signup" component={SignUp} />
 
             {/* Authenticated client app */}
-            <Route path="/home" component={HomeFeed} />
+            <Route path="/home">
+              {() => <Redirect to="/browse" />}
+            </Route>
             <Route path="/browse" component={Browse} />
             <Route path="/items/new">
               {() => <ListingForm mode="create" />}
@@ -59,10 +62,13 @@ export default function App() {
             <Route path="/users/:id">
               {(params) => <Profile params={params} isPublic />}
             </Route>
-            <Route path="/swaps" component={Swaps} />
+            <Route path="/swaps">
+              {() => <Redirect to="/profile?tab=history" />}
+            </Route>
             <Route path="/swaps/:id">
               {(params) => <SwapDetail params={params} />}
             </Route>
+            <Route path="/disputes" component={Disputes} />
             <Route path="/chat">
               {() => <Chat />}
             </Route>

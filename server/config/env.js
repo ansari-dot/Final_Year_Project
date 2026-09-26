@@ -56,12 +56,13 @@ const env = {
   },
 
   email: {
-    host: required('EMAIL_HOST', 'smtp.sendgrid.net'),
-    port: parseInt(required('EMAIL_PORT', '587'), 10),
-    secure: required('EMAIL_SECURE', 'false') === 'true',
-    user: required('EMAIL_USER', ''),
-    password: required('EMAIL_PASSWORD', ''),
-    from: required('EMAIL_FROM', 'ReWearX <no-reply@rewearx.com>'),
+    service: required('EMAIL_SERVICE', 'gmail'),
+    host: required('EMAIL_HOST', 'smtp.gmail.com'),
+    port: parseInt(required('EMAIL_PORT', '465'), 10),
+    secure: required('EMAIL_SECURE', 'true') === 'true',
+    user: process.env.EMAIL_USER || process.env.GMAIL_USER || process.env.GOOGLE_EMAIL || '',
+    password: process.env.EMAIL_PASSWORD || process.env.GMAIL_PASS || process.env.GMAIL_APP_PASSWORD || process.env.GOOGLE_APP_PASSWORD || '',
+    from: required('EMAIL_FROM', 'ReWearX <0349ansari@gmail.com>'),
   },
 
   rateLimit: {

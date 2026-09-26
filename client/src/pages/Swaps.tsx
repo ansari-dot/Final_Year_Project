@@ -9,6 +9,8 @@ import EmptyState from '../components/ui/EmptyState';
 import { swapsApi } from '../lib/api';
 import { adaptSwap, ApiSwap } from '../lib/api/types';
 
+import { getSocket } from '../lib/socket';
+
 type Tab = 'received' | 'sent';
 type StatusFilter = 'all' | 'pending' | 'accepted' | 'rejected' | 'completed' | 'cancelled';
 
@@ -43,6 +45,8 @@ export default function Swaps() {
   const [tab, setTab] = useState<Tab>('received');
   const [status, setStatus] = useState<StatusFilter>('all');
   const [items, setItems] = useState<DisplaySwap[]>([]);
+  const [receivedCount, setReceivedCount] = useState(0);
+  const [sentCount, setSentCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [actingId, setActingId] = useState<string | null>(null);
 
@@ -50,9 +54,17 @@ export default function Swaps() {
     if (!user) return;
     setLoading(true);
     try {
-      const { items: raw } = await swapsApi.list({ role: tab, limit: 50 });
+      const [receivedRes, sentRes] = await Promise.all([
+        swapsApi.list({ role: 'received', limit: 50 }).catch(() => ({ items: [] as ApiSwap[] })),
+        swapsApi.list({ role: 'sent', limit: 50 }).catch(() => ({ items: [] as ApiSwap[] })),
+      ]);
+
+      setReceivedCount(receivedRes.items.length);
+      setSentCount(sentRes.items.length);
+
+      const activeList = tab === 'received' ? receivedRes.items : sentRes.items;
       setItems(
-        raw.map((s) => ({
+        activeList.map((s) => ({
           ui: adaptSwap(s, user.id),
           raw: s,
         }))
@@ -66,10 +78,18 @@ export default function Swaps() {
 
   useEffect(() => {
     loadSwaps();
+    const socket = getSocket();
+    const handleUpdate = () => loadSwaps();
+    socket.on('swap-request-new', handleUpdate);
+    socket.on('swap-request-updated', handleUpdate);
+    return () => {
+      socket.off('swap-request-new', handleUpdate);
+      socket.off('swap-request-updated', handleUpdate);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, user]);
 
-  const counts = useMemo(() => ({ received: tab === 'received' ? items.length : 0, sent: tab === 'sent' ? items.length : 0 }), [items, tab]);
+  const counts = useMemo(() => ({ received: receivedCount, sent: sentCount }), [receivedCount, sentCount]);
 
   const filtered = useMemo(() => {
     let list = items;
@@ -80,12 +100,9 @@ export default function Swaps() {
   const handleStatus = async (id: string, next: 'accepted' | 'rejected' | 'cancelled' | 'completed') => {
     setActingId(id);
     try {
-      const updated = await swapsApi.updateStatus(id, next);
-      if (apiUser) {
-        const adapted = adaptSwap(updated, String(apiUser.id));
-        setItems((prev) => prev.map((s) => (s.ui.id === id ? { ui: adapted, raw: updated } : s)));
-      }
+      await swapsApi.updateStatus(id, next);
       toast(`Swap ${next}.`, 'success');
+      await loadSwaps();
     } catch (err) {
       toast(err instanceof Error ? err.message : 'Action failed.', 'error');
     } finally {
@@ -94,7 +111,7 @@ export default function Swaps() {
   };
 
   return (
-    <div className="pt-20 sm:pt-24 pb-12 sm:pb-16 bg-background relative z-10">
+    <div className="pt-6 sm:pt-8 pb-12 sm:pb-16 bg-background relative z-10">
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
         <div className="mb-5">
           <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-accent">

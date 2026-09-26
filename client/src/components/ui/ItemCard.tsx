@@ -1,6 +1,6 @@
-import type { Key } from 'react';
+import { Key } from 'react';
 import { Link } from 'wouter';
-import { Heart, X } from 'lucide-react';
+import { Heart, X, MapPin } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Item, getUser } from '../../lib/mockData';
 import Badge from './Badge';
@@ -89,6 +89,10 @@ export default function ItemCard({
         <div className="flex flex-wrap gap-1">
           <Badge label={item.size} color="gray" />
           <Badge label={item.condition} color="accent" />
+        </div>
+        <div className="flex items-center gap-1 text-[11px] text-[#7D7265] font-medium mt-0.5">
+          <MapPin size={11} className="text-[#2E4D3A] shrink-0" />
+          <span className="truncate">{item.location || 'Islamabad'}</span>
         </div>
         {showOwner && owner && (
           <Link href={`/users/${owner.id}`}>

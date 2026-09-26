@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link, useLocation } from 'wouter';
-import { ChevronRight, Heart, Edit, Trash2, Repeat, MessageSquare, Star, Loader2 } from 'lucide-react';
+import { ChevronRight, Heart, Edit, Trash2, Repeat, MessageSquare, Star, Loader2, MapPin } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
@@ -190,7 +190,7 @@ export default function ItemDetail({ params }: ItemDetailProps) {
   };
 
   return (
-    <div className="pt-20 sm:pt-24 pb-12 sm:pb-16 bg-background relative z-10">
+    <div className="pt-6 sm:pt-8 pb-12 sm:pb-16 bg-background relative z-10">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-primary/60 mb-4">
@@ -260,12 +260,16 @@ export default function ItemDetail({ params }: ItemDetailProps) {
               )}
             </div>
 
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap items-center gap-1.5">
               <Badge label={`Size ${item.size}`} color="gray" />
               <Badge label={item.gender} color="gray" />
               <Badge label={item.condition} color="accent" />
               {item.color && <Badge label={item.color} color="gray" />}
               {item.brand && <Badge label={item.brand} color="primary" />}
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#2E4D3A]/10 text-[#2E4D3A] text-xs font-semibold border border-[#2E4D3A]/20">
+                <MapPin size={12} className="text-[#2E4D3A]" />
+                {item.location || 'Islamabad'}
+              </span>
             </div>
 
             <div>

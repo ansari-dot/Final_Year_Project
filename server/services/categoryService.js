@@ -8,7 +8,21 @@ const listCategories = async (activeOnly = true) => {
   const where = activeOnly ? { isActive: true } : {};
   return Category.findAll({
     where,
-    order: [['name', 'ASC']],
+    order: [
+      ['name', 'ASC'],
+    ],
+    include: [
+      {
+        model: Category,
+        as: 'parentCategory',
+        attributes: ['id', 'name'],
+      },
+      {
+        model: Category,
+        as: 'subcategories',
+        attributes: ['id', 'name', 'description', 'iconUrl', 'isActive'],
+      },
+    ],
     attributes: {
       include: [
         [
@@ -23,8 +37,18 @@ const listCategories = async (activeOnly = true) => {
 };
 
 const createCategory = async (file, data) => {
-  const existing = await Category.findOne({ where: { name: data.name } });
-  if (existing) throw ApiError.conflict('Category already exists.');
+  let parentId = null;
+  if (data.parentId && data.parentId !== 'null' && data.parentId !== 'undefined' && data.parentId !== '') {
+    const parsedId = parseInt(data.parentId, 10);
+    if (!isNaN(parsedId)) {
+      const parent = await Category.findByPk(parsedId);
+      if (!parent) throw ApiError.notFound('Parent category not found.');
+      parentId = parsedId;
+    }
+  }
+
+  const existing = await Category.findOne({ where: { name: data.name, parentId } });
+  if (existing) throw ApiError.conflict('A category with this name already exists under the selected parent.');
 
   let iconUrl = null;
   let cloudinaryPublicId = null;
@@ -38,6 +62,7 @@ const createCategory = async (file, data) => {
   return Category.create({
     name: data.name,
     description: data.description || null,
+    parentId,
     iconUrl,
     cloudinaryPublicId,
     isActive: data.isActive !== undefined ? data.isActive : true,
@@ -64,8 +89,29 @@ const updateCategory = async (id, file, data) => {
   if (data.description !== undefined) category.description = data.description;
   if (data.isActive !== undefined) category.isActive = data.isActive;
 
+  if (data.parentId !== undefined) {
+    if (data.parentId === null || data.parentId === 'null' || data.parentId === '' || data.parentId === 0) {
+      category.parentId = null;
+    } else {
+      const parsedParentId = parseInt(data.parentId, 10);
+      if (parsedParentId === id) {
+        throw ApiError.badRequest('Category cannot be its own parent.');
+      }
+      if (!isNaN(parsedParentId)) {
+        const parent = await Category.findByPk(parsedParentId);
+        if (!parent) throw ApiError.notFound('Parent category not found.');
+        category.parentId = parsedParentId;
+      }
+    }
+  }
+
   await category.save();
-  return category;
+  return Category.findByPk(id, {
+    include: [
+      { model: Category, as: 'parentCategory', attributes: ['id', 'name'] },
+      { model: Category, as: 'subcategories', attributes: ['id', 'name', 'description', 'iconUrl', 'isActive'] },
+    ],
+  });
 };
 
 const deactivateCategory = async (id) => {
@@ -79,6 +125,12 @@ const deleteCategory = async (id) => {
   const category = await Category.findByPk(id);
   if (!category) throw ApiError.notFound('Category not found.');
   
+  // Check if category has subcategories
+  const subCount = await Category.count({ where: { parentId: id } });
+  if (subCount > 0) {
+    throw ApiError.badRequest(`Cannot delete main category that has ${subCount} subcategories. Remove or reassign subcategories first.`);
+  }
+
   // Check if category has items
   const itemCount = await sequelize.query(
     'SELECT COUNT(*) as count FROM clothing_items WHERE category_id = ? AND is_available = 1',

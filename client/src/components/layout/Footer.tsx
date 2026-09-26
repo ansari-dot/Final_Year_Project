@@ -1,68 +1,206 @@
-import { RefreshCw, Instagram, Twitter, Facebook } from 'lucide-react';
+import { 
+  Instagram, 
+  Twitter, 
+  Facebook, 
+  Linkedin 
+} from 'lucide-react';
+import { Link } from 'wouter';
+import logoImg from '@/assets/logo.png';
+
+const POPULAR_HUBS = [
+  'Islamabad',
+  'Lahore',
+  'Karachi',
+  'Rawalpindi',
+  'Abbottabad',
+  'Peshawar',
+  'Faisalabad',
+  'Multan',
+  'Quetta',
+  'Sialkot'
+];
 
 export default function Footer() {
   return (
-    <footer className="bg-[#f2efe8] border-t border-border/80 font-body text-primary relative z-10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 pt-8 sm:pt-10 md:pt-12 pb-5 sm:pb-7 md:pb-9">
-        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-5 gap-6 sm:gap-7">
-          <div className="col-span-2 sm:col-span-2 flex flex-col gap-2.5 sm:gap-3">
-            <div className="flex items-center gap-2">
-              <div className="bg-accent text-accent-foreground rounded-full p-1.5 flex items-center justify-center">
-                <RefreshCw size={13} className="md:w-3.5 md:h-3.5" />
+    <footer className="bg-[#F4EFE6] text-[#1E1B18] font-body border-t border-[#E5DFD3] relative z-10">
+      
+      {/* ── MAIN FOOTER CONTENT ── */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-16">
+        <div className="grid grid-cols-2 md:grid-cols-12 gap-8 lg:gap-12">
+          
+          {/* Brand Info & Mission (Col 1-4) */}
+          <div className="col-span-2 md:col-span-4 space-y-4 pr-0 md:pr-6">
+            <Link href="/" className="inline-flex items-center cursor-pointer" aria-label="ReWearX Home">
+              <div className="w-24 sm:w-28 h-12 flex items-center justify-start">
+                <img 
+                  src={logoImg} 
+                  alt="ReWearX" 
+                  className="h-10 sm:h-12 w-auto object-contain transform scale-[1.8] origin-left"
+                />
               </div>
-              <span className="font-headings text-base md:text-lg font-bold tracking-tight">ReWearX</span>
-            </div>
-            <p className="text-[13px] sm:text-sm text-muted-foreground max-w-xs leading-relaxed">
-              Swap clothes. Share style. No money. Just better choices.
+            </Link>
+
+            <p className="text-xs sm:text-sm text-[#7D7265] font-normal leading-relaxed max-w-sm">
+              Pakistan&apos;s circular swap community. Exchange preloved apparel, footwear, tech, and vintage collectibles with verified members nationwide.
             </p>
-            <div className="flex items-center gap-3.5 mt-1 text-muted-foreground">
-              <a href="#" aria-label="Instagram" className="hover:text-accent transition-colors">
-                <Instagram size={16} />
+
+            {/* Clean Social Links */}
+            <div className="flex items-center gap-2.5 pt-2">
+              <a 
+                href="https://instagram.com" 
+                target="_blank" 
+                rel="noreferrer" 
+                aria-label="Instagram"
+                className="w-8 h-8 rounded-full bg-[#EAE3D6] hover:bg-[#1E1B18] text-[#1E1B18] hover:text-white flex items-center justify-center transition-colors"
+              >
+                <Instagram size={15} />
               </a>
-              <a href="#" aria-label="Twitter" className="hover:text-accent transition-colors">
-                <Twitter size={16} />
+              <a 
+                href="https://twitter.com" 
+                target="_blank" 
+                rel="noreferrer" 
+                aria-label="Twitter"
+                className="w-8 h-8 rounded-full bg-[#EAE3D6] hover:bg-[#1E1B18] text-[#1E1B18] hover:text-white flex items-center justify-center transition-colors"
+              >
+                <Twitter size={15} />
               </a>
-              <a href="#" aria-label="Facebook" className="hover:text-accent transition-colors">
-                <Facebook size={16} />
+              <a 
+                href="https://facebook.com" 
+                target="_blank" 
+                rel="noreferrer" 
+                aria-label="Facebook"
+                className="w-8 h-8 rounded-full bg-[#EAE3D6] hover:bg-[#1E1B18] text-[#1E1B18] hover:text-white flex items-center justify-center transition-colors"
+              >
+                <Facebook size={15} />
+              </a>
+              <a 
+                href="https://linkedin.com" 
+                target="_blank" 
+                rel="noreferrer" 
+                aria-label="LinkedIn"
+                className="w-8 h-8 rounded-full bg-[#EAE3D6] hover:bg-[#1E1B18] text-[#1E1B18] hover:text-white flex items-center justify-center transition-colors"
+              >
+                <Linkedin size={15} />
               </a>
             </div>
           </div>
 
-          <div className="flex flex-col gap-2 sm:gap-2.5">
-            <h5 className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Platform</h5>
-            <ul className="flex flex-col gap-1.5 text-[13px] sm:text-sm font-medium text-primary/80">
-              <li><a href="#" className="hover:text-accent transition-colors">How It Works</a></li>
-              <li><a href="#" className="hover:text-accent transition-colors">Browse Swaps</a></li>
-              <li><a href="#" className="hover:text-accent transition-colors">Categories</a></li>
-              <li><a href="#" className="hover:text-accent transition-colors">Safety & Tips</a></li>
+          {/* Col 2: Marketplace */}
+          <div className="col-span-1 md:col-span-3 space-y-3">
+            <h4 className="text-[11px] font-bold uppercase tracking-wider text-[#1E1B18]">
+              Marketplace
+            </h4>
+            <ul className="space-y-2 text-xs sm:text-sm text-[#7D7265]">
+              <li>
+                <Link href="/browse?category=Women" className="hover:text-[#1E1B18] transition-colors">Women&apos;s Fashion</Link>
+              </li>
+              <li>
+                <Link href="/browse?category=Men" className="hover:text-[#1E1B18] transition-colors">Men&apos;s Apparel</Link>
+              </li>
+              <li>
+                <Link href="/browse?category=Tech" className="hover:text-[#1E1B18] transition-colors">Mobiles & Tech</Link>
+              </li>
+              <li>
+                <Link href="/browse?category=Footwear" className="hover:text-[#1E1B18] transition-colors">Footwear & Sneakers</Link>
+              </li>
+              <li>
+                <Link href="/browse?category=Jewelry" className="hover:text-[#1E1B18] transition-colors">Watches & Jewelry</Link>
+              </li>
+              <li>
+                <Link href="/browse?category=Bags" className="hover:text-[#1E1B18] transition-colors">Bags & Luggage</Link>
+              </li>
+              <li>
+                <Link href="/browse?category=Vintage" className="hover:text-[#1E1B18] transition-colors">Vintage Archive</Link>
+              </li>
+              <li>
+                <Link href="/browse?filter=free" className="hover:text-[#1E1B18] transition-colors">Free Drops</Link>
+              </li>
             </ul>
           </div>
 
-          <div className="flex flex-col gap-2 sm:gap-2.5">
-            <h5 className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Company</h5>
-            <ul className="flex flex-col gap-1.5 text-[13px] sm:text-sm font-medium text-primary/80">
-              <li><a href="#" className="hover:text-accent transition-colors">About Us</a></li>
-              <li><a href="#" className="hover:text-accent transition-colors">Our Mission</a></li>
-              <li><a href="#" className="hover:text-accent transition-colors">Blog</a></li>
-              <li><a href="#" className="hover:text-accent transition-colors">Careers</a></li>
+          {/* Col 3: How It Works & Trading */}
+          <div className="col-span-1 md:col-span-3 space-y-3">
+            <h4 className="text-[11px] font-bold uppercase tracking-wider text-[#1E1B18]">
+              Swapping & Safety
+            </h4>
+            <ul className="space-y-2 text-xs sm:text-sm text-[#7D7265]">
+              <li>
+                <Link href="/how-it-works" className="hover:text-[#1E1B18] transition-colors">How Swapping Works</Link>
+              </li>
+              <li>
+                <Link href="/how-it-works" className="hover:text-[#1E1B18] transition-colors">Swapper Protection</Link>
+              </li>
+              <li>
+                <Link href="/how-it-works" className="hover:text-[#1E1B18] transition-colors">Doorstep Trade Guide</Link>
+              </li>
+              <li>
+                <Link href="/items/new" className="hover:text-[#1E1B18] transition-colors">List an Item</Link>
+              </li>
+              <li>
+                <Link href="/how-it-works" className="hover:text-[#1E1B18] transition-colors">Condition Standards</Link>
+              </li>
+              <li>
+                <Link href="/community" className="hover:text-[#1E1B18] transition-colors">Community Guidelines</Link>
+              </li>
             </ul>
           </div>
 
-          <div className="col-span-2 sm:col-span-2 md:col-span-1 flex flex-col gap-2 sm:gap-2.5">
-            <h5 className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Support & Legal</h5>
-            <ul className="flex flex-col gap-1.5 text-[13px] sm:text-sm font-medium text-primary/80">
-              <li><a href="#" className="hover:text-accent transition-colors">Help Center</a></li>
-              <li><a href="#" className="hover:text-accent transition-colors">Terms of Service</a></li>
-              <li><a href="#" className="hover:text-accent transition-colors">Privacy Policy</a></li>
-              <li><a href="#" className="hover:text-accent transition-colors">Community Rules</a></li>
+          {/* Col 4: About & Help */}
+          <div className="col-span-2 md:col-span-2 space-y-3">
+            <h4 className="text-[11px] font-bold uppercase tracking-wider text-[#1E1B18]">
+              Company
+            </h4>
+            <ul className="space-y-2 text-xs sm:text-sm text-[#7D7265]">
+              <li>
+                <Link href="/about" className="hover:text-[#1E1B18] transition-colors">About Us</Link>
+              </li>
+              <li>
+                <Link href="/about" className="hover:text-[#1E1B18] transition-colors">Sustainability</Link>
+              </li>
+              <li>
+                <Link href="/contact" className="hover:text-[#1E1B18] transition-colors">Contact Support</Link>
+              </li>
+              <li>
+                <Link href="/terms" className="hover:text-[#1E1B18] transition-colors">Terms of Service</Link>
+              </li>
+              <li>
+                <Link href="/privacy" className="hover:text-[#1E1B18] transition-colors">Privacy Policy</Link>
+              </li>
             </ul>
+          </div>
+
+        </div>
+
+        {/* ── LOCAL HUBS IN PAKISTAN (Clean Text Links) ── */}
+        <div className="mt-12 pt-8 border-t border-[#E5DFD3]">
+          <div className="flex flex-col sm:flex-row sm:items-baseline gap-2 sm:gap-4">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#1E1B18] shrink-0">
+              Popular Cities:
+            </span>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-[#7D7265]">
+              {POPULAR_HUBS.map((city, idx) => (
+                <Link 
+                  key={city}
+                  href={`/browse?q=${encodeURIComponent(city)}`}
+                  className="hover:text-[#1E1B18] transition-colors"
+                >
+                  {city}{idx < POPULAR_HUBS.length - 1 ? ' ·' : ''}
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
 
-        <div className="mt-8 sm:mt-10 pt-4 sm:pt-5 border-t border-border/40 flex flex-col sm:flex-row justify-between items-center text-center sm:text-left text-[10px] sm:text-[11px] font-medium text-muted-foreground gap-1.5 sm:gap-4">
-          <span>© {new Date().getFullYear()} ReWearX. All rights reserved.</span>
-          <span>Made with love for a circular future.</span>
+        {/* ── BOTTOM COPYRIGHT STRIP ── */}
+        <div className="mt-8 pt-6 border-t border-[#E5DFD3] flex flex-col sm:flex-row justify-between items-center text-xs text-[#7D7265] gap-3">
+          <p>© {new Date().getFullYear()} ReWearX. All rights reserved.</p>
+          <div className="flex items-center gap-4">
+            <span>Pakistan</span>
+            <span className="text-[#E5DFD3]">•</span>
+            <span>Circular Swap Economy</span>
+          </div>
         </div>
+
       </div>
     </footer>
   );

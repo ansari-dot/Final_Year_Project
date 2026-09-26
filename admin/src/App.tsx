@@ -6,6 +6,7 @@ import Reports from './pages/Reports';
 import Analytics from './pages/Analytics';
 import HeroSection from './pages/HeroSection';
 import Categories from './pages/Categories';
+import Disputes from './pages/Disputes';
 import Login from './pages/Login';
 import { ToastProvider } from './components/Toast';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -30,6 +31,7 @@ function ProtectedShell() {
         <Route path="/" component={Dashboard} />
         <Route path="/users" component={Users} />
         <Route path="/reports" component={Reports} />
+        <Route path="/disputes" component={Disputes} />
         <Route path="/analytics" component={Analytics} />
         <Route path="/categories" component={Categories} />
         <Route path="/hero-section" component={HeroSection} />

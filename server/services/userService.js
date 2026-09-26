@@ -26,7 +26,7 @@ const getProfile = async (userId) => {
 
 const getPublicProfile = async (userId) => {
   const user = await User.findByPk(userId, {
-    attributes: ['id', 'name', 'profileImage', 'bio', 'gender', 'createdAt'],
+    attributes: ['id', 'name', 'profileImage', 'bio', 'gender', 'location', 'address', 'createdAt'],
   });
   if (!user) throw ApiError.notFound('User not found.');
 
@@ -57,7 +57,7 @@ const getStats = async (userId) => {
 };
 
 const updateProfile = async (userId, updates) => {
-  const allowed = ['name', 'bio', 'phone', 'gender', 'profileImage', 'dateOfBirth'];
+  const allowed = ['name', 'bio', 'phone', 'gender', 'profileImage', 'dateOfBirth', 'location', 'address'];
   const data = {};
   allowed.forEach((k) => {
     if (updates[k] !== undefined) data[k] = updates[k];
@@ -78,10 +78,11 @@ const updatePreferences = async (userId, prefs) => {
   const data = {};
   if (prefs.preferredGender !== undefined) data.preferredGender = prefs.preferredGender;
   if (prefs.preferredCondition !== undefined) data.preferredCondition = prefs.preferredCondition;
-  if (prefs.preferredSizes !== undefined) data.preferredSizes = JSON.stringify(prefs.preferredSizes);
-  if (prefs.preferredColors !== undefined) data.preferredColors = JSON.stringify(prefs.preferredColors);
+  if (prefs.preferredSizes !== undefined) data.preferredSizes = Array.isArray(prefs.preferredSizes) ? JSON.stringify(prefs.preferredSizes) : prefs.preferredSizes;
+  if (prefs.preferredColors !== undefined) data.preferredColors = Array.isArray(prefs.preferredColors) ? JSON.stringify(prefs.preferredColors) : prefs.preferredColors;
+  if (prefs.preferredStyles !== undefined) data.preferredStyles = Array.isArray(prefs.preferredStyles) ? JSON.stringify(prefs.preferredStyles) : prefs.preferredStyles;
   if (prefs.preferredCategories !== undefined)
-    data.preferredCategories = JSON.stringify(prefs.preferredCategories);
+    data.preferredCategories = Array.isArray(prefs.preferredCategories) ? JSON.stringify(prefs.preferredCategories) : prefs.preferredCategories;
 
   await preferences.update(data);
   return parsePreferences(preferences);
@@ -95,10 +96,10 @@ const getPreferences = async (userId) => {
 
 const parsePreferences = (preferences) => {
   const json = preferences.toJSON();
-  ['preferredSizes', 'preferredColors', 'preferredCategories'].forEach((k) => {
+  ['preferredSizes', 'preferredColors', 'preferredStyles', 'preferredCategories'].forEach((k) => {
     if (json[k]) {
       try {
-        json[k] = JSON.parse(json[k]);
+        json[k] = typeof json[k] === 'string' ? JSON.parse(json[k]) : json[k];
       } catch (_) {
         json[k] = [];
       }

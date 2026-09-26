@@ -117,7 +117,7 @@ export default function HowItWorks() {
         <img src={howBanner} alt="" className="absolute inset-0 w-full h-full object-cover object-center" />
         <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/30 to-accent/40 pointer-events-none" />
 
-        <div className="relative z-10 w-full max-w-5xl mx-auto px-5 sm:px-8 lg:px-12 flex flex-col items-center text-center pt-28 sm:pt-32 pb-16 sm:pb-20">
+        <div className="relative z-10 w-full max-w-5xl mx-auto px-5 sm:px-8 lg:px-12 flex flex-col items-center text-center pt-12 sm:pt-16 pb-16 sm:pb-20">
           <motion.span
             initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
             className="text-white/75 uppercase tracking-[0.26em] text-[10px] sm:text-[11px] font-bold mb-4"

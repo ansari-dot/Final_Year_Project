@@ -24,7 +24,7 @@ module.exports = (sequelize) => {
   );
 
   SwapperOfWeek.associate = (models) => {
-    SwapperOfWeek.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
+    SwapperOfWeek.belongsTo(models.User, { foreignKey: 'userId', as: 'user', onDelete: 'CASCADE' });
   };
 
   return SwapperOfWeek;

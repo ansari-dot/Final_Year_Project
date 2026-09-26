@@ -43,4 +43,10 @@ export const adminApi = {
   removeItem: (id: string | number) => http.delete<ApiItem>(`/admin/items/${id}`),
 
   stats: () => http.get<ApiStats>('/admin/stats'),
+
+  disputes: (params: { page?: number; limit?: number; status?: string } = {}) =>
+    paginated<any>('/disputes/admin/all', params as Record<string, unknown>),
+
+  resolveDispute: (id: string | number, payload: { status: string; resolutionNotes: string; blockUserId?: number }) =>
+    http.put<any>(`/disputes/admin/${id}/resolve`, payload),
 };

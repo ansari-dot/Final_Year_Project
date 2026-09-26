@@ -100,7 +100,7 @@ export default function HomeFeed() {
   };
 
   return (
-    <div className="w-full pt-20 sm:pt-24 pb-12 sm:pb-16 bg-background relative z-10">
+    <div className="w-full pt-6 sm:pt-8 pb-12 sm:pb-16 bg-background relative z-10">
       {/* Hero */}
       <section className="relative w-full overflow-hidden">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">

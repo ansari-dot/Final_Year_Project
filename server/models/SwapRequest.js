@@ -34,6 +34,11 @@ module.exports = (sequelize) => {
         allowNull: true,
         field: 'receiver_confirmed_at',
       },
+      acceptedAt: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        field: 'accepted_at',
+      },
     },
     {
       tableName: 'swap_requests',
@@ -63,6 +68,7 @@ module.exports = (sequelize) => {
       as: 'conversation',
     });
     SwapRequest.hasMany(models.Review, { foreignKey: 'swapRequestId', as: 'reviews' });
+    SwapRequest.hasMany(models.Dispute, { foreignKey: 'swapRequestId', as: 'disputes' });
   };
 
   return SwapRequest;

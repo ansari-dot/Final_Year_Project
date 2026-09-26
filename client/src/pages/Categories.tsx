@@ -37,7 +37,7 @@ export default function Categories() {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto w-full px-4 sm:px-8 lg:px-12 pt-28 sm:pt-32 md:pt-36 pb-12 font-body">
+      <div className="max-w-7xl mx-auto w-full px-4 sm:px-8 lg:px-12 pt-10 sm:pt-12 pb-12 font-body">
         <div className="flex flex-col items-center justify-center py-20">
           <Loader2 size={40} className="animate-spin text-primary/40 mb-4" />
           <p className="text-muted-foreground">Loading categories...</p>
@@ -47,7 +47,7 @@ export default function Categories() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto w-full px-4 sm:px-8 lg:px-12 pt-28 sm:pt-32 md:pt-36 pb-12 sm:pb-16 md:pb-20 font-body">
+    <div className="max-w-7xl mx-auto w-full px-4 sm:px-8 lg:px-12 pt-8 sm:pt-10 md:pt-12 pb-12 sm:pb-16 md:pb-20 font-body">
       {/* Header */}
       <div className="text-center mb-12">
         <h1 className="font-headings text-3xl sm:text-4xl md:text-5xl font-bold text-primary mb-4 leading-tight">

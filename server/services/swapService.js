@@ -7,15 +7,18 @@ const {
   Conversation,
   User,
   ClothingImage,
+  Review,
   sequelize,
 } = require('../models');
 const ApiError = require('../utils/ApiError');
 const notificationService = require('./notificationService');
+const emailService = require('./emailService');
+const logger = require('../utils/logger');
 const { NOTIFICATION_TYPES } = notificationService;
 
 const includeForSwap = [
-  { model: User, as: 'sender', attributes: ['id', 'name', 'profileImage'] },
-  { model: User, as: 'receiver', attributes: ['id', 'name', 'profileImage'] },
+  { model: User, as: 'sender', attributes: ['id', 'name', 'email', 'profileImage'] },
+  { model: User, as: 'receiver', attributes: ['id', 'name', 'email', 'profileImage'] },
   {
     model: ClothingItem,
     as: 'senderItem',
@@ -27,6 +30,7 @@ const includeForSwap = [
     include: [{ model: ClothingImage, as: 'images' }],
   },
   { model: Conversation, as: 'conversation' },
+  { model: Review, as: 'reviews' },
 ];
 
 const createSwapRequest = async (senderId, { receiverId, senderItemId, receiverItemId, message }) => {
@@ -73,8 +77,12 @@ const createSwapRequest = async (senderId, { receiverId, senderItemId, receiverI
     status: 'pending',
   });
 
-  // Notify receiver
-  const sender = await User.findByPk(senderId);
+  // Notify receiver via in-app notification & email
+  const [sender, receiver] = await Promise.all([
+    User.findByPk(senderId),
+    User.findByPk(receiverId),
+  ]);
+
   await notificationService.createNotification(
     receiverId,
     NOTIFICATION_TYPES.SWAP_REQUEST,
@@ -82,6 +90,20 @@ const createSwapRequest = async (senderId, { receiverId, senderItemId, receiverI
     `${sender.name} wants to swap "${senderItem.title}" for your "${receiverItem.title}".`,
     { swapId: swap.id, senderId, senderItemId, receiverItemId }
   );
+
+  if (receiver && receiver.email) {
+    emailService
+      .sendSwapRequestEmail(
+        receiver.email,
+        receiver.name,
+        sender.name,
+        senderItem.title,
+        receiverItem.title,
+        message,
+        swap.id
+      )
+      .catch((err) => logger.error(`Failed to send swap request email to ${receiver.email}: ${err.message}`));
+  }
 
   return getSwapById(swap.id);
 };
@@ -110,6 +132,7 @@ const acceptSwap = async (swapId, userId) => {
     }
 
     swap.status = 'accepted';
+    swap.acceptedAt = new Date();
     await swap.save({ transaction: t });
 
     // Auto-create conversation
@@ -121,15 +144,34 @@ const acceptSwap = async (swapId, userId) => {
 
     return { swap, conversation };
   }).then(async ({ swap }) => {
-    const receiver = await User.findByPk(swap.receiverId);
-    const senderItem = await ClothingItem.findByPk(swap.senderItemId);
+    const [sender, receiver, senderItem, receiverItem] = await Promise.all([
+      User.findByPk(swap.senderId),
+      User.findByPk(swap.receiverId),
+      ClothingItem.findByPk(swap.senderItemId),
+      ClothingItem.findByPk(swap.receiverItemId),
+    ]);
+
     await notificationService.createNotification(
       swap.senderId,
       NOTIFICATION_TYPES.SWAP_ACCEPTED,
       'Swap request accepted!',
-      `${receiver.name} accepted your swap request for "${senderItem.title}".`,
+      `${receiver.name} accepted your swap request for "${senderItem ? senderItem.title : 'offered item'}".`,
       { swapId: swap.id }
     );
+
+    if (sender && sender.email) {
+      emailService
+        .sendSwapAcceptedEmail(
+          sender.email,
+          sender.name,
+          receiver.name,
+          senderItem ? senderItem.title : 'Offered Item',
+          receiverItem ? receiverItem.title : 'Requested Item',
+          swap.id
+        )
+        .catch((err) => logger.error(`Failed to send swap accepted email to ${sender.email}: ${err.message}`));
+    }
+
     return getSwapById(swap.id);
   });
 };

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
-import { Check, ChevronRight, AlertTriangle, Trash2, Loader2 } from 'lucide-react';
+import { Check, ChevronRight, AlertTriangle, Trash2, Loader2, MapPin } from 'lucide-react';
 import { motion } from 'motion/react';
 import ImageUploader, { UploaderImage } from '../components/ui/ImageUploader';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
@@ -13,6 +13,7 @@ import {
   genders,
   conditions,
   colors as colorOptions,
+  PAKISTAN_CITIES,
   Item,
 } from '../lib/mockData';
 
@@ -30,6 +31,7 @@ type FormState = {
   condition: Item['condition'] | '';
   color: string;
   brand: string;
+  location: string;
   description: string;
   is_available: boolean;
 };
@@ -43,6 +45,7 @@ const empty: FormState = {
   condition: '',
   color: '',
   brand: '',
+  location: 'Islamabad',
   description: '',
   is_available: true,
 };
@@ -60,12 +63,33 @@ export default function ListingForm({ params, mode }: ListingFormProps) {
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [apiCategories, setApiCategories] = useState<ApiCategory[]>([]);
+  const [selectedMainCatId, setSelectedMainCatId] = useState<number | ''>('');
   const [loadingItem, setLoadingItem] = useState(mode === 'edit');
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    categoriesApi.list().then(setApiCategories).catch(() => undefined);
+    categoriesApi
+      .list()
+      .then((res) => {
+        const cats: ApiCategory[] = Array.isArray(res) ? res : (res as unknown as { data: ApiCategory[] })?.data || [];
+        setApiCategories(cats);
+      })
+      .catch(() => undefined);
   }, []);
+
+  // Sync selectedMainCatId when editing or when form.categoryId changes
+  useEffect(() => {
+    if (form.categoryId && apiCategories.length > 0) {
+      const cat = apiCategories.find((c) => c.id === form.categoryId);
+      if (cat) {
+        if (cat.parentId) {
+          setSelectedMainCatId(cat.parentId);
+        } else {
+          setSelectedMainCatId(cat.id);
+        }
+      }
+    }
+  }, [form.categoryId, apiCategories]);
 
   useEffect(() => {
     if (mode !== 'edit' || !params?.id) return;
@@ -89,6 +113,7 @@ export default function ListingForm({ params, mode }: ListingFormProps) {
           condition: conditionMap[item.condition],
           color: item.color || '',
           brand: item.brand || '',
+          location: item.location || 'Islamabad',
           description: item.description || '',
           is_available: item.isAvailable,
         });
@@ -146,6 +171,7 @@ export default function ListingForm({ params, mode }: ListingFormProps) {
         condition: apiConditionFromUI(form.condition as Item['condition']),
         color: form.color || undefined,
         brand: form.brand || undefined,
+        location: form.location || 'Islamabad',
       };
 
       if (mode === 'create') {
@@ -202,10 +228,34 @@ export default function ListingForm({ params, mode }: ListingFormProps) {
   }
 
   const stepLabels = ['Images', 'Details', 'Preferences'];
-  const categoryOptions = apiCategories;
+  const mainCategories = apiCategories.filter((c) => !c.parentId);
+  const subcategories = selectedMainCatId
+    ? apiCategories.filter((c) => c.parentId === Number(selectedMainCatId))
+    : [];
+
+  const handleMainCategoryChange = (mainId: number | '') => {
+    setSelectedMainCatId(mainId);
+    setTouched((t) => ({ ...t, categoryId: true }));
+    if (!mainId) {
+      update('categoryId', '');
+      return;
+    }
+    const mainCat = apiCategories.find((c) => c.id === mainId);
+    if (mainCat) {
+      if (mainCat.name === 'Men' && !form.gender) update('gender', 'Male');
+      if (mainCat.name === 'Women' && !form.gender) update('gender', 'Female');
+      if (mainCat.name === 'Unisex' && !form.gender) update('gender', 'Unisex');
+    }
+    const subs = apiCategories.filter((c) => c.parentId === Number(mainId));
+    if (subs.length > 0) {
+      update('categoryId', '');
+    } else {
+      update('categoryId', mainId);
+    }
+  };
 
   return (
-    <div className="pt-20 sm:pt-24 pb-12 sm:pb-16 bg-background relative z-10">
+    <div className="pt-6 sm:pt-8 pb-12 sm:pb-16 bg-background relative z-10">
       <div className="max-w-2xl mx-auto px-4 sm:px-6">
         <div className="text-center mb-6">
           <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-accent">
@@ -306,40 +356,99 @@ export default function ListingForm({ params, mode }: ListingFormProps) {
                 </div>
               </div>
 
-              <div className="grid sm:grid-cols-2 gap-5">
+              {/* ── Separate Main Category & Subcategory Selection ── */}
+              <div className="grid sm:grid-cols-2 gap-4">
+                {/* 1. Main Category Selector */}
                 <div>
                   <label className="text-[11px] font-bold uppercase tracking-wider text-primary/80">
-                    Category <span className="text-red-500">*</span>
+                    Main Category <span className="text-red-500">*</span>
                   </label>
                   <select
+                    value={selectedMainCatId}
+                    onChange={(e) => handleMainCategoryChange(e.target.value ? Number(e.target.value) : '')}
+                    onBlur={() => setTouched((t) => ({ ...t, categoryId: true }))}
+                    className={`w-full mt-2 px-4 py-3 rounded-xl bg-muted/20 border focus:outline-none focus:ring-2 focus:ring-primary/20 ${
+                      fieldError('categoryId') && !selectedMainCatId ? 'border-red-500' : 'border-border/60'
+                    }`}
+                  >
+                    <option value="">Select Main Category…</option>
+                    {mainCategories.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* 2. Subcategory Selector */}
+                <div>
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-primary/80">
+                    Subcategory {subcategories.length > 0 && <span className="text-red-500">*</span>}
+                  </label>
+                  <select
+                    disabled={!selectedMainCatId || subcategories.length === 0}
                     value={form.categoryId}
                     onChange={(e) => update('categoryId', e.target.value ? Number(e.target.value) : '')}
                     onBlur={() => setTouched((t) => ({ ...t, categoryId: true }))}
-                    className={`w-full mt-2 px-4 py-3 rounded-xl bg-muted/20 border focus:outline-none focus:ring-2 focus:ring-primary/20 ${
-                      fieldError('categoryId') ? 'border-red-500' : 'border-border/60'
+                    className={`w-full mt-2 px-4 py-3 rounded-xl bg-muted/20 border focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50 disabled:cursor-not-allowed ${
+                      fieldError('categoryId') && selectedMainCatId && subcategories.length > 0
+                        ? 'border-red-500'
+                        : 'border-border/60'
                     }`}
                   >
-                    <option value="">Select a category…</option>
-                    {categoryOptions.map((c) => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
+                    <option value="">
+                      {!selectedMainCatId
+                        ? 'Select Main Category first'
+                        : subcategories.length === 0
+                        ? 'No subcategories available'
+                        : 'Select Subcategory…'}
+                    </option>
+                    {subcategories.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
                     ))}
                   </select>
-                  {fieldError('categoryId') && (
-                    <p className="text-red-600 text-xs font-semibold mt-1">{fieldError('categoryId')}</p>
-                  )}
                 </div>
+              </div>
+              {fieldError('categoryId') && (
+                <p className="text-red-600 text-xs font-semibold mt-1">
+                  {!selectedMainCatId
+                    ? 'Please select a main category'
+                    : 'Please select a subcategory'}
+                </p>
+              )}
 
-                <div>
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-primary/80">
-                    Brand
-                  </label>
-                  <input
-                    value={form.brand}
-                    maxLength={100}
-                    onChange={(e) => update('brand', e.target.value)}
-                    placeholder="e.g. Arket"
-                    className="w-full mt-2 px-4 py-3 rounded-xl bg-muted/20 border border-border/60 focus:outline-none focus:ring-2 focus:ring-primary/20"
-                  />
+              <div>
+                <label className="text-[11px] font-bold uppercase tracking-wider text-primary/80">
+                  Brand
+                </label>
+                <input
+                  value={form.brand}
+                  maxLength={100}
+                  onChange={(e) => update('brand', e.target.value)}
+                  placeholder="e.g. Levi's, Zara, Arket"
+                  className="w-full mt-2 px-4 py-3 rounded-xl bg-muted/20 border border-border/60 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold uppercase tracking-wider text-primary/80 flex items-center gap-1.5 mb-2">
+                  <MapPin size={13} className="text-[#2E4D3A]" />
+                  <span>Location (City in Pakistan)</span> <span className="text-red-500">*</span>
+                </label>
+                <div className="relative flex items-center">
+                  <select
+                    value={form.location}
+                    onChange={(e) => update('location', e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl bg-muted/20 border border-border/60 focus:outline-none focus:ring-2 focus:ring-primary/20 font-medium text-sm text-primary cursor-pointer"
+                  >
+                    {PAKISTAN_CITIES.filter((c) => c !== 'All Pakistan').map((city) => (
+                      <option key={city} value={city}>
+                        {city}, Pakistan
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 

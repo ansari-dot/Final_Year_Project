@@ -19,6 +19,7 @@ module.exports = (sequelize) => {
         allowNull: false,
       },
       color: { type: DataTypes.STRING(50), allowNull: true },
+      location: { type: DataTypes.STRING(150), allowNull: true, defaultValue: 'Islamabad' },
       isAvailable: { type: DataTypes.BOOLEAN, defaultValue: true, field: 'is_available' },
       viewCount: { type: DataTypes.INTEGER, defaultValue: 0, field: 'view_count' },
     },
@@ -30,6 +31,7 @@ module.exports = (sequelize) => {
         { fields: ['is_available'] },
         { fields: ['gender'] },
         { fields: ['condition'] },
+        { fields: ['location'] },
       ],
     }
   );

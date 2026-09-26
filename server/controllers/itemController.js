@@ -19,6 +19,7 @@ const list = asyncHandler(async (req, res) => {
     size: req.query.size,
     color: req.query.color,
     brand: req.query.brand,
+    location: req.query.location,
     q: req.query.q,
     excludeUserId: req.user?.id,
   };
@@ -97,6 +98,7 @@ const search = asyncHandler(async (req, res) => {
     size: req.query.size,
     color: req.query.color,
     brand: req.query.brand,
+    location: req.query.location,
     excludeUserId: req.user?.id,
   };
   const result = await itemService.listItems(filters, page, limit);

@@ -19,7 +19,19 @@ interface AuthContextValue {
   refresh: () => Promise<UIUser | null>;
 }
 
-const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+const defaultAuthContext: AuthContextValue = {
+  user: null,
+  apiUser: null,
+  isAuthenticated: false,
+  isLoading: false,
+  signIn: async () => { throw new Error('AuthProvider not ready'); },
+  signUp: async () => { throw new Error('AuthProvider not ready'); },
+  signOut: async () => {},
+  updateUser: async () => { throw new Error('AuthProvider not ready'); },
+  refresh: async () => null,
+};
+
+const AuthContext = createContext<AuthContextValue>(defaultAuthContext);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const cachedRaw = userStore.get<ApiUser>();
@@ -108,6 +120,5 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used within an AuthProvider');
-  return ctx;
+  return ctx || defaultAuthContext;
 }

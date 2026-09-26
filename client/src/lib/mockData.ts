@@ -11,6 +11,7 @@ export interface User {
   reviewCount: number;
   joined: string;
   location?: string;
+  address?: string;
   phone?: string;
   gender?: 'Male' | 'Female' | 'Unisex';
   dob?: string;
@@ -30,6 +31,7 @@ export interface Item {
   condition: 'New' | 'Like New' | 'Good' | 'Fair';
   color: string;
   brand?: string;
+  location?: string;
   is_available: boolean;
   user_id: string;
   exchangePrefs?: string;
@@ -51,6 +53,7 @@ export interface SwapRequest {
   updatedAt: string;
   conversationId?: string;
   timeline?: { status: string; at: string }[];
+  hasReviewed?: boolean;
 }
 
 export interface Message {
@@ -214,6 +217,29 @@ export const colors = [
   { name: 'Navy', hex: '#1f2e4d' },
   { name: 'Ivory', hex: '#fbf9f4' },
   { name: 'Olive', hex: '#5a6a3c' },
+];
+
+export const PAKISTAN_CITIES = [
+  'All Pakistan',
+  'Islamabad',
+  'Rawalpindi',
+  'Lahore',
+  'Karachi',
+  'Peshawar',
+  'Faisalabad',
+  'Multan',
+  'Quetta',
+  'Abbottabad',
+  'Sialkot',
+  'Gujranwala',
+  'Hyderabad',
+  'Bahawalpur',
+  'Sargodha',
+  'Sukkur',
+  'Mardan',
+  'Gujrat',
+  'Wah Cantt',
+  'Kasur',
 ];
 
 // ─── ITEMS ──────────────────────────────────────────────────────────────────

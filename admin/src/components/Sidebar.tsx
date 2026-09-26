@@ -9,6 +9,7 @@ import {
   LogOut,
   Image,
   FolderTree,
+  Scale,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { adminApi } from '../lib/api/admin';
@@ -17,6 +18,7 @@ const NAV = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/users', label: 'Users', icon: Users },
   { href: '/reports', label: 'Reports', icon: ShieldAlert },
+  { href: '/disputes', label: 'Disputes Tribunal', icon: Scale },
   { href: '/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/categories', label: 'Categories', icon: FolderTree },
   { href: '/hero-section', label: 'Hero Section', icon: Image },

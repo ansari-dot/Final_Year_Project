@@ -90,6 +90,7 @@ CREATE TABLE IF NOT EXISTS `user_preferences` (
   `preferred_gender`     ENUM('male','female','unisex','any') NOT NULL DEFAULT 'any',
   `preferred_sizes`      TEXT NULL,
   `preferred_colors`     TEXT NULL,
+  `preferred_styles`     TEXT NULL,
   `preferred_condition`  ENUM('new','like_new','good','fair','any') NOT NULL DEFAULT 'any',
   `preferred_categories` TEXT NULL,
   `created_at`           DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,

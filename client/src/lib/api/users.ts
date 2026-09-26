@@ -14,7 +14,8 @@ export interface UserPreferences {
   preferredGender?: 'male' | 'female' | 'unisex' | 'any';
   preferredSizes?: string[];
   preferredColors?: string[];
-  preferredCategories?: number[];
+  preferredStyles?: string[];
+  preferredCategories?: (number | string)[];
   preferredCondition?: 'new' | 'like_new' | 'good' | 'fair' | 'any';
 }
 

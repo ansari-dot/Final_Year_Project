@@ -1,5 +1,7 @@
 'use strict';
 
+// Server entry point - email notification handlers enabled
+
 const http = require('http');
 const app = require('./app');
 const env = require('./config/env');
@@ -56,13 +58,16 @@ const start = async () => {
     process.on('SIGINT', () => shutdown('SIGINT'));
     process.on('SIGTERM', () => shutdown('SIGTERM'));
     process.on('unhandledRejection', (reason) => {
+      console.error('Unhandled rejection:', reason);
       logger.error('Unhandled rejection:', reason);
     });
     process.on('uncaughtException', (err) => {
+      console.error('Uncaught exception:', err);
       logger.error('Uncaught exception:', err);
       process.exit(1);
     });
   } catch (err) {
+    console.error('Server failed to start:', err);
     logger.error('Server failed to start:', err);
     process.exit(1);
   }

@@ -104,6 +104,7 @@ const validators = {
     body('preferredGender').optional().isIn(['male', 'female', 'unisex', 'any']),
     body('preferredSizes').optional().isArray(),
     body('preferredColors').optional().isArray(),
+    body('preferredStyles').optional().isArray(),
     body('preferredCategories').optional().isArray(),
     body('preferredCondition').optional().isIn(['new', 'like_new', 'good', 'fair', 'any']),
     handleValidationErrors,
@@ -203,6 +204,7 @@ const validators = {
   createCategory: [
     body('name').isString().trim().isLength({ min: 2, max: 100 }),
     body('description').optional().isString().isLength({ max: 500 }),
+    body('parentId').optional({ nullable: true, checkFalsy: true }).toInt(),
     body('isActive').optional().isBoolean().toBoolean(),
     handleValidationErrors,
   ],
@@ -210,6 +212,7 @@ const validators = {
     idParamChain('id'),
     body('name').optional().isString().trim().isLength({ min: 2, max: 100 }),
     body('description').optional().isString().isLength({ max: 500 }),
+    body('parentId').optional({ nullable: true, checkFalsy: true }).toInt(),
     body('isActive').optional().isBoolean().toBoolean(),
     handleValidationErrors,
   ],

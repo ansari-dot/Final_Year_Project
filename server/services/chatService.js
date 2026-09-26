@@ -26,6 +26,30 @@ const ensureParticipant = async (conversationId, userId) => {
   return { conversation, swap };
 };
 
+// Helper to get all shared conversation IDs between two users
+const getAllSharedConversationIds = async (userId, otherUserId) => {
+  const swaps = await SwapRequest.findAll({
+    where: {
+      [Op.or]: [
+        { senderId: userId, receiverId: otherUserId },
+        { senderId: otherUserId, receiverId: userId },
+      ],
+      status: { [Op.in]: ['accepted', 'completed'] },
+    },
+    attributes: ['id'],
+  });
+
+  const swapIds = swaps.map((s) => s.id);
+  if (swapIds.length === 0) return [];
+
+  const convs = await Conversation.findAll({
+    where: { swapRequestId: { [Op.in]: swapIds } },
+    attributes: ['id'],
+  });
+
+  return convs.map((c) => c.id);
+};
+
 const getConversations = async (userId, page = 1, limit = 20) => {
   const offset = (page - 1) * limit;
 
@@ -40,7 +64,7 @@ const getConversations = async (userId, page = 1, limit = 20) => {
   const swapIds = swaps.map((s) => s.id);
   if (swapIds.length === 0) return { items: [], count: 0 };
 
-  const { rows, count } = await Conversation.findAndCountAll({
+  const rows = await Conversation.findAll({
     where: { swapRequestId: { [Op.in]: swapIds } },
     include: [
       {
@@ -66,12 +90,9 @@ const getConversations = async (userId, page = 1, limit = 20) => {
       ['lastMessageAt', 'DESC'],
       ['createdAt', 'DESC'],
     ],
-    limit,
-    offset,
-    distinct: true,
   });
 
-  // Attach unread count + last message
+  // Attach unread count + last message per conversation record
   const enriched = await Promise.all(
     rows.map(async (c) => {
       const [lastMessage, unreadCount] = await Promise.all([
@@ -87,17 +108,59 @@ const getConversations = async (userId, page = 1, limit = 20) => {
     })
   );
 
-  return { items: enriched, count };
+  // DEDUPLICATE BY OTHER USER ID (WhatsApp-style unified thread per partner)
+  const userMap = new Map();
+  for (const conv of enriched) {
+    const swap = conv.swapRequest;
+    if (!swap) continue;
+    const otherUserId = String(swap.senderId) === String(userId) ? String(swap.receiverId) : String(swap.senderId);
+
+    if (!userMap.has(otherUserId)) {
+      userMap.set(otherUserId, conv);
+    } else {
+      const existing = userMap.get(otherUserId);
+      existing.unreadCount = (existing.unreadCount || 0) + (conv.unreadCount || 0);
+
+      // Keep the conversation thread that has the most recent activity
+      const existingTime = new Date(
+        existing.lastMessage?.createdAt || existing.lastMessageAt || existing.createdAt
+      ).getTime();
+      const currentTIme = new Date(
+        conv.lastMessage?.createdAt || conv.lastMessageAt || conv.createdAt
+      ).getTime();
+
+      if (currentTIme > existingTime) {
+        const totalUnread = existing.unreadCount;
+        conv.unreadCount = totalUnread;
+        userMap.set(otherUserId, conv);
+      }
+    }
+  }
+
+  const consolidated = Array.from(userMap.values());
+  // Sort consolidated by most recent activity
+  consolidated.sort((a, b) => {
+    const tA = new Date(a.lastMessage?.createdAt || a.lastMessageAt || a.createdAt).getTime();
+    const tB = new Date(b.lastMessage?.createdAt || b.lastMessageAt || b.createdAt).getTime();
+    return tB - tA;
+  });
+
+  const paginatedItems = consolidated.slice(offset, offset + limit);
+  return { items: paginatedItems, count: consolidated.length };
 };
 
 const getMessages = async (conversationId, userId, page = 1, limit = 50) => {
-  await ensureParticipant(conversationId, userId);
+  const { swap } = await ensureParticipant(conversationId, userId);
+  const otherUserId = swap.senderId === userId ? swap.receiverId : swap.senderId;
+
+  // Find all conversation IDs shared between these two users (WhatsApp unified history)
+  const sharedConvIds = await getAllSharedConversationIds(userId, otherUserId);
+  const targetConvIds = sharedConvIds.length > 0 ? sharedConvIds : [conversationId];
+
   const offset = (page - 1) * limit;
   const { rows, count } = await Message.findAndCountAll({
-    where: { conversationId },
-    include: [
-      { model: User, as: 'sender', attributes: ['id', 'name', 'profileImage'] },
-    ],
+    where: { conversationId: { [Op.in]: targetConvIds } },
+    include: [{ model: User, as: 'sender', attributes: ['id', 'name', 'profileImage'] }],
     order: [['createdAt', 'DESC']],
     limit,
     offset,
@@ -165,12 +228,18 @@ const markMessageRead = async (messageId, userId) => {
 };
 
 const markConversationRead = async (conversationId, userId) => {
-  await ensureParticipant(conversationId, userId);
+  const { swap } = await ensureParticipant(conversationId, userId);
+  const otherUserId = swap.senderId === userId ? swap.receiverId : swap.senderId;
+
+  // Find all shared conversations with this partner user and mark unread messages as read
+  const sharedConvIds = await getAllSharedConversationIds(userId, otherUserId);
+  const targetConvIds = sharedConvIds.length > 0 ? sharedConvIds : [conversationId];
+
   const [count] = await Message.update(
     { isRead: true, readAt: new Date() },
     {
       where: {
-        conversationId,
+        conversationId: { [Op.in]: targetConvIds },
         senderId: { [Op.ne]: userId },
         isRead: false,
       },

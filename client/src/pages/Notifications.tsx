@@ -54,13 +54,13 @@ function navigateFor(n: Notification): string {
     case 'swap_accepted':
     case 'swap_rejected':
     case 'swap_completed':
-      return n.refId ? `/swaps/${n.refId}` : '/swaps';
+      return n.refId ? `/swaps/${n.refId}` : '/profile?tab=history';
     case 'new_message':
       return n.refId ? `/chat/${n.refId}` : '/chat';
     case 'review_received':
       return '/profile';
     default:
-      return '/home';
+      return '/browse';
   }
 }
 
@@ -136,7 +136,7 @@ export default function Notifications() {
   };
 
   return (
-    <div className="pt-20 sm:pt-24 pb-12 sm:pb-16 bg-background relative z-10">
+    <div className="pt-6 sm:pt-8 pb-12 sm:pb-16 bg-background relative z-10">
       <div className="max-w-2xl mx-auto px-4 sm:px-6">
         <div className="flex items-end justify-between gap-3 mb-4">
           <div>

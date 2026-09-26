@@ -150,7 +150,7 @@ export default function Settings() {
   };
 
   return (
-    <div className="pt-20 sm:pt-24 pb-12 sm:pb-16 bg-background relative z-10">
+    <div className="pt-6 sm:pt-8 pb-12 sm:pb-16 bg-background relative z-10">
       <div className="max-w-5xl mx-auto px-4 sm:px-6">
         <div className="mb-5">
           <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-accent">

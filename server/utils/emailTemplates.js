@@ -77,10 +77,50 @@ const genericNotification = (name, title, body) =>
 
 
 
+const swapRequestReceived = (receiverName, senderName, offeredItemTitle, requestedItemTitle, message, swapUrl) =>
+  baseLayout(
+    `New Swap Request from ${senderName}`,
+    `<h2 style="margin-top:0;color:#10b981;">New Swap Request Received! 🎉</h2>
+     <p>Hi <strong>${receiverName}</strong>,</p>
+     <p><strong>${senderName}</strong> is interested in swapping with you on <strong>ReWearX</strong>.</p>
+
+     <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin:20px 0;">
+       <p style="margin:0 0 8px 0;font-size:14px;color:#374151;"><strong>Your Item Requested:</strong> ${requestedItemTitle}</p>
+       <p style="margin:0 0 8px 0;font-size:14px;color:#374151;"><strong>Item Offered in Exchange:</strong> ${offeredItemTitle}</p>
+       ${message ? `<p style="margin:12px 0 0 0;font-size:13px;color:#4b5563;font-style:italic;background:#fff;padding:10px;border-radius:6px;border-left:3px solid #10b981;">"${message}"</p>` : ''}
+     </div>
+
+     <p style="text-align:center;margin:28px 0;">
+       <a href="${swapUrl}" style="background:#10b981;color:#ffffff;padding:14px 28px;border-radius:6px;text-decoration:none;font-weight:bold;display:inline-block;box-shadow:0 2px 4px rgba(16,185,129,0.2);">Review &amp; Respond to Request</a>
+     </p>
+
+     <p style="font-size:13px;color:#6b7280;">Log in to your ReWearX account to accept, decline, or message the sender.</p>`
+  );
+
+const swapRequestAccepted = (senderName, receiverName, offeredItemTitle, requestedItemTitle, chatUrl) =>
+  baseLayout(
+    `Swap Request Accepted by ${receiverName}`,
+    `<h2 style="margin-top:0;color:#10b981;">Your Swap Request was Accepted! 🥳</h2>
+     <p>Hi <strong>${senderName}</strong>,</p>
+     <p>Great news! <strong>${receiverName}</strong> has accepted your swap request for <strong>${requestedItemTitle}</strong> in exchange for your <strong>${offeredItemTitle}</strong>.</p>
+
+     <div style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;padding:16px;margin:20px 0;color:#065f46;">
+       <p style="margin:0;font-size:14px;"><strong>Next Step:</strong> Open a conversation with ${receiverName} to coordinate item exchange or shipping details.</p>
+     </div>
+
+     <p style="text-align:center;margin:28px 0;">
+       <a href="${chatUrl}" style="background:#10b981;color:#ffffff;padding:14px 28px;border-radius:6px;text-decoration:none;font-weight:bold;display:inline-block;box-shadow:0 2px 4px rgba(16,185,129,0.2);">Start Chat &amp; View Swap</a>
+     </p>
+
+     <p style="font-size:13px;color:#6b7280;">Thank you for contributing to a sustainable barter community!</p>`
+  );
+
 module.exports = {
   verifyEmail,
   passwordReset,
   swapNotification,
   genericNotification,
   otpVerification,
+  swapRequestReceived,
+  swapRequestAccepted,
 };

@@ -21,6 +21,8 @@ module.exports = (sequelize) => {
       profileImage: { type: DataTypes.STRING(500), allowNull: true, field: 'profile_image' },
       bio: { type: DataTypes.TEXT, allowNull: true },
       gender: { type: DataTypes.ENUM('male', 'female', 'other'), allowNull: false },
+      location: { type: DataTypes.STRING(150), allowNull: true, defaultValue: 'Islamabad' },
+      address: { type: DataTypes.TEXT, allowNull: true },
       dateOfBirth: { type: DataTypes.DATEONLY, allowNull: true, field: 'date_of_birth' },
       isVerified: { type: DataTypes.BOOLEAN, defaultValue: false, field: 'is_verified' },
       verificationToken: {

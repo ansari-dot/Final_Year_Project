@@ -21,6 +21,7 @@ const emptyFilters: BrowseFilters = {
   conditions: [],
   colors: [],
   brand: '',
+  location: '',
 };
 
 export default function Browse() {
@@ -45,6 +46,22 @@ export default function Browse() {
   useEffect(() => {
     categoriesApi.list().then((cs) => setApiCategories(cs)).catch(() => undefined);
   }, []);
+
+  // Sync query params from URL (e.g. /browse?q=... or ?category=... or ?location=...)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const qParam = params.get('q') || '';
+    const catParam = params.get('category');
+    const locParam = params.get('location') || '';
+    setQuery(qParam);
+    setSubmittedQuery(qParam);
+    setFilters((prev) => ({
+      ...prev,
+      categories: catParam ? [catParam] : [],
+      location: locParam,
+    }));
+    setPage(1);
+  }, [window.location.search]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -94,6 +111,7 @@ export default function Browse() {
       const apiFilters: Record<string, unknown> = { page, limit: PAGE_SIZE };
       if (submittedQuery) apiFilters.q = submittedQuery;
       if (filters.brand) apiFilters.brand = filters.brand;
+      if (filters.location) apiFilters.location = filters.location;
       if (filters.categories.length === 1) {
         const id = categoryNameToId.get(filters.categories[0]);
         if (id) apiFilters.categoryId = id;
@@ -190,7 +208,7 @@ export default function Browse() {
   return (
     <div className="w-full pb-12 sm:pb-16 bg-background relative z-10">
       {/* Search Hero */}
-      <section className="bg-gradient-to-br from-primary to-primary/85 text-white pt-20 sm:pt-24 md:pt-28 pb-10 sm:pb-12 px-4">
+      <section className="bg-gradient-to-br from-primary to-primary/85 text-white pt-8 sm:pt-10 md:pt-12 pb-10 sm:pb-12 px-4">
         <div className="max-w-3xl mx-auto text-center">
           <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-accent">
             Browse the community

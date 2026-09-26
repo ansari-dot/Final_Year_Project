@@ -35,6 +35,7 @@ const createItem = async (userId, itemData, files = []) => {
         gender: itemData.gender,
         condition: itemData.condition,
         color: itemData.color || null,
+        location: itemData.location || 'Islamabad',
       },
       { transaction: t }
     );
@@ -80,6 +81,7 @@ const updateItem = async (itemId, userId, updates) => {
     'condition',
     'color',
     'brand',
+    'location',
     'isAvailable',
   ];
   const data = {};
@@ -115,12 +117,23 @@ const listItems = async (filters = {}, page = 1, limit = 20) => {
   const offset = (page - 1) * limit;
   const where = { isAvailable: true };
 
-  if (filters.categoryId) where.categoryId = filters.categoryId;
+  if (filters.categoryId) {
+    const catId = parseInt(filters.categoryId, 10);
+    if (!isNaN(catId)) {
+      const subcats = await Category.findAll({ where: { parentId: catId }, attributes: ['id'] });
+      if (subcats.length > 0) {
+        where.categoryId = { [Op.in]: [catId, ...subcats.map((s) => s.id)] };
+      } else {
+        where.categoryId = catId;
+      }
+    }
+  }
   if (filters.gender) where.gender = filters.gender;
   if (filters.condition) where.condition = filters.condition;
   if (filters.size) where.size = filters.size;
   if (filters.color) where.color = { [Op.like]: `%${filters.color}%` };
   if (filters.brand) where.brand = { [Op.like]: `%${filters.brand}%` };
+  if (filters.location) where.location = { [Op.like]: `%${filters.location}%` };
   if (filters.userId) where.userId = filters.userId;
 
   if (filters.q) {
@@ -128,6 +141,7 @@ const listItems = async (filters = {}, page = 1, limit = 20) => {
       { title: { [Op.like]: `%${filters.q}%` } },
       { description: { [Op.like]: `%${filters.q}%` } },
       { brand: { [Op.like]: `%${filters.q}%` } },
+      { location: { [Op.like]: `%${filters.q}%` } },
     ];
   }
   if (filters.excludeUserId) {

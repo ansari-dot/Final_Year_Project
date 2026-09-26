@@ -20,6 +20,7 @@ module.exports = (sequelize) => {
       },
       preferredSizes: { type: DataTypes.TEXT, allowNull: true, field: 'preferred_sizes' },
       preferredColors: { type: DataTypes.TEXT, allowNull: true, field: 'preferred_colors' },
+      preferredStyles: { type: DataTypes.TEXT, allowNull: true, field: 'preferred_styles' },
       preferredCondition: {
         type: DataTypes.ENUM('new', 'like_new', 'good', 'fair', 'any'),
         defaultValue: 'any',

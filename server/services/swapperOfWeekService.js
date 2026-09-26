@@ -84,9 +84,12 @@ const getCurrentSwappers = async () => {
       limit: 4,
     });
 
+    // Filter out records where user is null (e.g. deleted user)
+    const validSwappers = swappers.filter((s) => s && s.user);
+
     // Get rating for each user
     const swappersWithRating = await Promise.all(
-      swappers.map(async (swapper) => {
+      validSwappers.map(async (swapper) => {
         const avgRating = await sequelize.query(
           `SELECT AVG(rating) as avg_rating 
            FROM reviews 
@@ -97,10 +100,12 @@ const getCurrentSwappers = async () => {
           }
         );
 
+        const userName = swapper.user?.name || 'Swapper';
+
         return {
           id: swapper.user.id,
-          name: swapper.user.name,
-          username: `@${swapper.user.name.toLowerCase().replace(/\s+/g, '')}`,
+          name: userName,
+          username: `@${userName.toLowerCase().replace(/\s+/g, '')}`,
           image: swapper.user.profileImage || null,
           swaps: swapper.totalSwaps,
           rating: parseFloat(avgRating[0]?.avg_rating || 0),

@@ -23,6 +23,8 @@ export interface ApiUser {
   profileImage?: string | null;
   bio?: string | null;
   gender: 'male' | 'female' | 'other';
+  location?: string | null;
+  address?: string | null;
   dateOfBirth?: string | null;
   isVerified: boolean;
   role: 'user' | 'admin';
@@ -45,6 +47,9 @@ export interface ApiCategory {
   iconUrl?: string | null;
   isActive: boolean;
   itemCount?: number;
+  parentId?: number | null;
+  subcategories?: ApiCategory[];
+  parentCategory?: ApiCategory | null;
 }
 
 export interface ApiImage {
@@ -67,6 +72,7 @@ export interface ApiItem {
   gender: 'male' | 'female' | 'unisex';
   condition: 'new' | 'like_new' | 'good' | 'fair';
   color?: string | null;
+  location?: string | null;
   isAvailable: boolean;
   viewCount?: number;
   createdAt: string;
@@ -85,6 +91,7 @@ export interface ApiSwap {
   receiverItemId: number;
   message?: string | null;
   status: 'pending' | 'accepted' | 'rejected' | 'cancelled' | 'completed';
+  acceptedAt?: string | null;
   senderConfirmedAt?: string | null;
   receiverConfirmedAt?: string | null;
   createdAt: string;
@@ -94,6 +101,7 @@ export interface ApiSwap {
   senderItem?: ApiItem;
   receiverItem?: ApiItem;
   conversation?: { id: number; swapRequestId: number };
+  reviews?: ApiReview[];
 }
 
 export interface ApiMessage {
@@ -152,6 +160,37 @@ export interface ApiAddress {
   postalCode?: string | null;
   country: string;
   isDefault: boolean;
+}
+
+export interface ApiDisputeEvidence {
+  id: number;
+  disputeId: number;
+  uploaderId: number;
+  url: string;
+  publicId?: string | null;
+  caption?: string | null;
+  createdAt: string;
+  uploader?: { id: number; name: string };
+}
+
+export interface ApiDispute {
+  id: number;
+  swapRequestId: number;
+  initiatorId: number;
+  respondentId: number;
+  reason: 'item_not_as_described' | 'damaged_item' | 'fake_brand' | 'missing_item' | 'never_shipped' | 'other';
+  description: string;
+  status: 'opened' | 'under_review' | 'resolved_cancel_swap' | 'resolved_dismissed' | 'resolved_warning_issued';
+  resolutionNotes?: string | null;
+  resolvedById?: number | null;
+  resolvedAt?: string | null;
+  createdAt: string;
+  updatedAt?: string;
+  swapRequest?: ApiSwap;
+  initiator?: Partial<ApiUser>;
+  respondent?: Partial<ApiUser>;
+  resolver?: Partial<ApiUser>;
+  evidences?: ApiDisputeEvidence[];
 }
 
 export interface ApiAuthResponse {
@@ -216,6 +255,8 @@ export const adaptUser = (u: ApiUser): UIUser => ({
   rating: u.stats?.avgRating ?? 0,
   reviewCount: u.stats?.reviewCount ?? 0,
   joined: u.createdAt?.slice(0, 10) || '',
+  location: u.location || 'Islamabad',
+  address: u.address || undefined,
   phone: u.phone || undefined,
   gender: userGenderMap[u.gender],
   dob: u.dateOfBirth || undefined,
@@ -238,6 +279,7 @@ export const adaptItem = (i: ApiItem, score?: number): UIItem => ({
   condition: uiConditionFromApi(i.condition),
   color: i.color || '',
   brand: i.brand || undefined,
+  location: i.location || 'Islamabad',
   is_available: i.isAvailable,
   user_id: String(i.userId),
   createdAt: i.createdAt?.slice(0, 10) || '',
@@ -254,7 +296,7 @@ export const adaptItem = (i: ApiItem, score?: number): UIItem => ({
     : undefined,
 });
 
-export const adaptSwap = (s: ApiSwap, _currentUserId?: string): UISwap => {
+export const adaptSwap = (s: ApiSwap, currentUserId?: string): UISwap => {
   const status =
     s.status === 'accepted' || s.status === 'pending' || s.status === 'rejected' || s.status === 'completed' || s.status === 'cancelled'
       ? s.status
@@ -270,6 +312,12 @@ export const adaptSwap = (s: ApiSwap, _currentUserId?: string): UISwap => {
     });
   }
 
+  const hasReviewed = Boolean(
+    s.reviews &&
+      currentUserId &&
+      s.reviews.some((r) => String(r.reviewerId) === String(currentUserId))
+  );
+
   return {
     id: String(s.id),
     fromUserId: String(s.senderId),
@@ -282,6 +330,7 @@ export const adaptSwap = (s: ApiSwap, _currentUserId?: string): UISwap => {
     updatedAt: (s.updatedAt || s.createdAt || '').slice(0, 10),
     conversationId: s.conversation?.id ? String(s.conversation.id) : undefined,
     timeline,
+    hasReviewed,
   };
 };
 

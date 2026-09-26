@@ -10,20 +10,38 @@ let transporter = null;
 const getTransporter = () => {
   if (transporter) return transporter;
 
-  if (!env.email.host || !env.email.user) {
-    logger.warn('Email transporter not configured – emails will be logged to console only.');
+  const emailUser = env.email.user || process.env.EMAIL_USER || process.env.GMAIL_USER || process.env.GOOGLE_EMAIL;
+  const emailPass = env.email.password || process.env.EMAIL_PASSWORD || process.env.GMAIL_PASS || process.env.GMAIL_APP_PASSWORD || process.env.GOOGLE_APP_PASSWORD;
+
+  if (!emailUser || !emailPass) {
+    logger.warn('Email transporter not configured – missing EMAIL_USER or EMAIL_PASSWORD. Emails will be logged to console.');
     return null;
   }
 
-  transporter = nodemailer.createTransport({
-    host: env.email.host,
-    port: env.email.port,
-    secure: env.email.secure,
-    auth: { user: env.email.user, pass: env.email.password },
-  });
+  const useGmail = env.email.service === 'gmail' || (env.email.host && env.email.host.includes('gmail'));
+
+  const transportOpts = useGmail
+    ? {
+        service: 'gmail',
+        auth: {
+          user: emailUser,
+          pass: emailPass,
+        },
+      }
+    : {
+        host: env.email.host,
+        port: env.email.port,
+        secure: env.email.secure,
+        auth: {
+          user: emailUser,
+          pass: emailPass,
+        },
+      };
+
+  transporter = nodemailer.createTransport(transportOpts);
 
   transporter.verify().then(
-    () => logger.info('Email transporter ready.'),
+    () => logger.info(`Email transporter ready via ${useGmail ? 'Gmail' : env.email.host}.`),
     (err) => logger.error('Email transporter verification failed:', err.message)
   );
 
@@ -33,13 +51,14 @@ const getTransporter = () => {
 const sendEmail = async (to, subject, html, text = null) => {
   try {
     const t = getTransporter();
+    const fromAddress = env.email.from || `ReWearX <${env.email.user || 'no-reply@rewearx.com'}>`;
     if (!t) {
       logger.info(`[DEV EMAIL] To: ${to} | Subject: ${subject}`);
       logger.debug(`[DEV EMAIL HTML] ${html}`);
       return { dev: true };
     }
     const info = await t.sendMail({
-      from: env.email.from,
+      from: fromAddress,
       to,
       subject,
       html,
@@ -72,6 +91,26 @@ const sendSwapNotification = (to, name, type, details) => {
   return sendEmail(to, subjects[type] || 'ReWearX update', templates.swapNotification(name, type, details));
 };
 
+const sendSwapRequestEmail = (toEmail, receiverName, senderName, offeredItemTitle, requestedItemTitle, message, swapId) => {
+  const clientUrl = env.clientUrl || 'http://localhost:5173';
+  const swapUrl = `${clientUrl}/swaps/${swapId}`;
+  return sendEmail(
+    toEmail,
+    `New Swap Request from ${senderName} on ReWearX`,
+    templates.swapRequestReceived(receiverName, senderName, offeredItemTitle, requestedItemTitle, message, swapUrl)
+  );
+};
+
+const sendSwapAcceptedEmail = (toEmail, senderName, receiverName, offeredItemTitle, requestedItemTitle, swapId) => {
+  const clientUrl = env.clientUrl || 'http://localhost:5173';
+  const chatUrl = `${clientUrl}/swaps/${swapId}`;
+  return sendEmail(
+    toEmail,
+    `Swap Request Accepted! ${receiverName} accepted your swap request`,
+    templates.swapRequestAccepted(senderName, receiverName, offeredItemTitle, requestedItemTitle, chatUrl)
+  );
+};
+
 const sendGenericEmail = (to, name, title, body) =>
   sendEmail(to, title, templates.genericNotification(name, title, body));
 
@@ -81,5 +120,7 @@ module.exports = {
   sendOtpEmail,
   sendPasswordResetEmail,
   sendSwapNotification,
+  sendSwapRequestEmail,
+  sendSwapAcceptedEmail,
   sendGenericEmail,
 };
