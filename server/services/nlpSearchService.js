@@ -69,12 +69,22 @@ async function rankItems(queryEmbedding, items) {
   return data.rankings || [];
 }
 
-// Helper: Check if query explicitly contains a category name (word boundaries)
+// Helper: Check if query explicitly contains a category name (sorted by longest name first to avoid partial matches)
 function findExplicitCategory(query, categories) {
   const queryLower = query.toLowerCase();
-  for (const category of categories) {
+
+  // Exclude main gender category names ('Men', 'Women', 'Unisex') as category locks,
+  // since gender is handled separately by the gender attribute filter.
+  // Sort by length descending so "T-Shirts" is evaluated before "Shirts".
+  const sortedCategories = [...categories]
+    .filter((c) => !['men', 'women', 'unisex'].includes(c.name.toLowerCase()))
+    .sort((a, b) => b.name.length - a.name.length);
+
+  for (const category of sortedCategories) {
     const catNameLower = category.name.toLowerCase();
-    const regex = new RegExp(`\\b${catNameLower}\\b`, 'i');
+    // Escape regex characters (such as hyphens in "T-Shirts")
+    const escaped = catNameLower.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+    const regex = new RegExp(`(?:^|\\b|\\s)${escaped}(?:$|\\b|\\s)`, 'i');
     if (regex.test(queryLower)) {
       return category;
     }
@@ -119,13 +129,18 @@ async function nlpSearch(query, excludeUserId, limit = 20) {
     where.userId = { [Op.ne]: Number(excludeUserId) };
   }
 
-  // Only apply category filter if user explicitly typed an actual category name (e.g. "jacket", "shirt", "lehenga")
+  // Only apply category filter if user explicitly typed an actual category name (e.g. "jacket", "t-shirt", "lehenga")
   const explicitCategory = findExplicitCategory(query, allCategories);
   if (explicitCategory) {
-    where.categoryId = explicitCategory.id;
+    const subCatIds = allCategories.filter((c) => c.parentId === explicitCategory.id).map((c) => c.id);
+    if (subCatIds.length > 0) {
+      where.categoryId = { [Op.in]: [explicitCategory.id, ...subCatIds] };
+    } else {
+      where.categoryId = explicitCategory.id;
+    }
     logger.info(`[NLP] EXPLICIT CATEGORY MATCH: "${explicitCategory.name}" (ID: ${explicitCategory.id})`);
   } else {
-    logger.info(`[NLP] General/Occasion query detected ("${query}"). Searching across descriptions & titles in ALL categories.`);
+    logger.info(`[NLP] Occasion/Concept query detected ("${query}"). Searching titles & descriptions across ALL categories.`);
   }
 
   // Apply high-confidence gender/condition/color attribute filters dynamically
