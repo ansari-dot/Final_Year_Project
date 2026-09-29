@@ -47,6 +47,10 @@ export const authApi = {
     return http.post('/auth/forgot-password', { email });
   },
 
+  verifyResetOtp(email: string, otp: string): Promise<{ resetToken: string }> {
+    return http.post('/auth/verify-reset-otp', { email, otp });
+  },
+
   resetPassword(token: string, password: string) {
     return http.post('/auth/reset-password', { token, password });
   },

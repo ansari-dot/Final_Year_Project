@@ -1,9 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ScanSearch, X, Camera, Loader2, ArrowRight } from 'lucide-react';
+import { ScanSearch, X, Camera, Loader2, ArrowRight, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useLocation } from 'wouter';
 import { useToast } from '../../contexts/ToastContext';
+import { itemsApi } from '../../lib/api';
 
-// Mock data for results
+// Fallback data for results if catalog is empty
 const mockResults = [
   {
     id: 1,
@@ -28,9 +30,12 @@ export default function AISearchWidget() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [searchResults, setSearchResults] = useState<any[]>(mockResults);
+  const [extractedTags, setExtractedTags] = useState<string[]>([]);
   const [isMobile, setIsMobile] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 640);
@@ -48,19 +53,52 @@ export default function AISearchWidget() {
     if (file) {
       const url = URL.createObjectURL(file);
       setUploadedImage(url);
-      simulateSearch();
+      executeVisualSearch(file);
     }
   };
 
-  const simulateSearch = () => {
+  const executeVisualSearch = async (file: File) => {
     setIsAnalyzing(true);
     setShowResults(false);
-    
-    // Simulate AI extraction and DB search delay
-    setTimeout(() => {
+    setExtractedTags([]);
+    try {
+      const res = await itemsApi.visualSearch(file);
+      const itemsList = res?.results || (Array.isArray(res) ? res : []);
+      
+      if (res?.query_attributes && typeof res.query_attributes === 'object') {
+        const tags: string[] = [];
+        Object.entries(res.query_attributes).forEach(([attrKey, attrObj]: [string, any]) => {
+          if (attrKey === 'extracted_attributes') return;
+          const val = typeof attrObj === 'string' ? attrObj : (attrObj?.value || null);
+          if (val && val !== 'null') {
+            const capitalKey = attrKey.charAt(0).toUpperCase() + attrKey.slice(1);
+            tags.push(`${capitalKey}: ${val}`);
+          }
+        });
+        setExtractedTags(tags);
+      }
+
+
+      if (Array.isArray(itemsList) && itemsList.length > 0) {
+        setSearchResults(itemsList.map((item: any) => ({
+          id: item.id || item.item_id,
+          title: item.title || item.name || 'Clothing Item',
+          owner: item.owner || item.User?.name || 'Community Seller',
+          matchScore: item.matchScore || Math.round((item.score || 0.85) * 100),
+          image: item.image || item.images?.[0]?.url || 'https://images.unsplash.com/photo-1576995853123-5a10305d93c0?auto=format&fit=crop&q=80&w=300&h=300',
+          features: Array.isArray(item.features) ? item.features : ['Clothing'],
+          ...item
+        })));
+      } else {
+        setSearchResults(mockResults);
+      }
+    } catch (err) {
+      console.warn('[AISearchWidget] Visual search fallback activated:', err);
+      setSearchResults(mockResults);
+    } finally {
       setIsAnalyzing(false);
       setShowResults(true);
-    }, 2500);
+    }
   };
 
   const resetSearch = () => {
@@ -70,10 +108,20 @@ export default function AISearchWidget() {
     setUploadedImage(null);
     setShowResults(false);
     setIsAnalyzing(false);
+    setExtractedTags([]);
   };
 
-  const handleRequestSwap = (itemTitle: string) => {
-    toast(`Swap request sent for ${itemTitle}!`, 'success');
+  const handleRequestSwap = (itemTitle: string, itemId?: number) => {
+    toast(`Swap request initiated for ${itemTitle}!`, 'success');
+    if (itemId) {
+      setIsOpen(false);
+      setLocation(`/items/${itemId}`);
+    }
+  };
+
+  const handleCardClick = (itemId: number) => {
+    setIsOpen(false);
+    setLocation(`/items/${itemId}`);
   };
 
   return (
@@ -133,7 +181,7 @@ export default function AISearchWidget() {
                     <ScanSearch size={16} className="sm:w-[18px] sm:h-[18px] text-white" />
                   </div>
                   <div>
-                    <h2 className="font-headings font-bold text-base sm:text-lg leading-none tracking-tight">AI Vision Search</h2>
+                    <h2 className="font-headings font-bold text-base sm:text-lg leading-none tracking-tight">AI Smart Search</h2>
                     <p className="text-[10px] text-muted-foreground uppercase tracking-[0.15em] font-bold mt-1.5 opacity-80">Find Matches Instantly</p>
                   </div>
                 </div>
@@ -199,7 +247,7 @@ export default function AISearchWidget() {
                             <div className="absolute inset-0 flex items-center justify-center">
                               <div className="bg-white/95 backdrop-blur-md px-5 py-3 rounded-full font-bold text-primary text-xs shadow-xl flex items-center gap-3 border border-border/40">
                                 <Loader2 size={16} className="animate-spin text-accent" />
-                                Extracting features...
+                                Analyzing search attributes...
                               </div>
                             </div>
                           </div>
@@ -218,6 +266,21 @@ export default function AISearchWidget() {
                       </div>
                     </div>
 
+                    {/* Extracted attributes pill badges */}
+                    {showResults && extractedTags.length > 0 && (
+                      <div className="bg-emerald-50/80 border border-emerald-200/80 rounded-2xl p-3.5 flex items-center gap-2 text-xs text-emerald-900 font-medium">
+                        <Sparkles size={16} className="text-emerald-600 shrink-0" />
+                        <div className="flex flex-wrap gap-1.5 items-center">
+                          <span className="font-bold text-[11px] uppercase tracking-wider text-emerald-800">Extracted AI Query:</span>
+                          {extractedTags.map((tag) => (
+                            <span key={tag} className="bg-white px-2 py-0.5 rounded-full text-[10px] font-bold border border-emerald-300 text-emerald-900">
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     {/* Results Area */}
                     {showResults && (
                       <motion.div
@@ -227,17 +290,18 @@ export default function AISearchWidget() {
                       >
                         <div className="flex items-center justify-between">
                           <h3 className="text-[11px] font-black tracking-[0.2em] text-primary/70 uppercase">
-                            Matches Found ({mockResults.length})
+                            Matches Found ({searchResults.length})
                           </h3>
                         </div>
                         
                         <div className="space-y-3">
-                          {mockResults.map((result, i) => (
+                          {searchResults.map((result, i) => (
                             <motion.div
                               initial={{ opacity: 0, y: 20 }}
                               animate={{ opacity: 1, y: 0 }}
-                              transition={{ delay: i * 0.15, ease: 'easeOut' }}
+                              transition={{ delay: i * 0.1, ease: 'easeOut' }}
                               key={result.id}
+                              onClick={() => handleCardClick(result.id)}
                               className="bg-white rounded-2xl p-3 flex gap-4 shadow-sm border border-border/50 hover:shadow-lg hover:border-primary/20 transition-all duration-300 group cursor-pointer"
                             >
                               <div className="w-[88px] h-[88px] rounded-xl overflow-hidden shrink-0 relative">
@@ -253,7 +317,7 @@ export default function AISearchWidget() {
                                 </div>
                                 
                                 <div className="flex flex-wrap gap-1.5 mt-2">
-                                  {result.features.slice(0, 3).map(f => (
+                                  {result.features.slice(0, 3).map((f: string) => (
                                     <span key={f} className="text-[9px] px-2 py-[2px] bg-muted/60 border border-border/40 rounded uppercase tracking-wider text-primary/70 font-bold">{f}</span>
                                   ))}
                                 </div>
@@ -261,7 +325,7 @@ export default function AISearchWidget() {
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    handleRequestSwap(result.title);
+                                    handleRequestSwap(result.title, result.id);
                                   }}
                                   className="mt-2.5 self-start text-[10px] font-black text-primary hover:text-accent flex items-center gap-1.5 transition-colors uppercase tracking-widest relative z-10"
                                 >

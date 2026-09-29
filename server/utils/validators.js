@@ -83,6 +83,11 @@ const validators = {
     handleValidationErrors,
   ],
   forgotPassword: [emailRule, handleValidationErrors],
+  verifyResetOtp: [
+    emailRule,
+    body('otp').isString().isLength({ min: 6, max: 6 }).withMessage('OTP must be 6 digits'),
+    handleValidationErrors,
+  ],
   resetPassword: [
     body('token').isString().notEmpty(),
     passwordRule,

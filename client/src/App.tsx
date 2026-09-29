@@ -11,6 +11,8 @@ import HowItWorks from './pages/HowItWorks';
 import Categories from './pages/Categories';
 import ContactUs from './pages/ContactUs';
 import Login from './pages/Login';
+import AuthSuccess from './pages/AuthSuccess';
+import ForgotPassword from './pages/ForgotPassword';
 import SignUp from './pages/SignUp';
 import HomeFeed from './pages/HomeFeed';
 import Browse from './pages/Browse';
@@ -42,6 +44,8 @@ export default function App() {
             <Route path="/categories" component={Categories} />
             <Route path="/contact" component={ContactUs} />
             <Route path="/login" component={Login} />
+            <Route path="/auth/success" component={AuthSuccess} />
+            <Route path="/forgot-password" component={ForgotPassword} />
             <Route path="/signup" component={SignUp} />
 
             {/* Authenticated client app */}

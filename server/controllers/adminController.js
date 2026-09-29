@@ -4,7 +4,7 @@ const adminService = require('../services/adminService');
 const reportService = require('../services/reportService');
 const { success, paginated, asyncHandler, buildPagination } = require('../utils/response');
 
-const listUsers = asyncHandler(async(req, res) => {
+const listUsers = asyncHandler(async (req, res) => {
     const page = parseInt(req.query.page || '1', 10);
     const limit = parseInt(req.query.limit || '20', 10);
     const result = await adminService.listUsers({
@@ -23,13 +23,13 @@ const listUsers = asyncHandler(async(req, res) => {
     );
 });
 
-const updateUserStatus = asyncHandler(async(req, res) => {
+const updateUserStatus = asyncHandler(async (req, res) => {
     const id = parseInt(req.params.id, 10);
     const user = await adminService.setUserStatus(id, req.body.status, req.user.id);
     return success(res, 200, user, `User status updated to ${user.status}.`);
 });
 
-const listReports = asyncHandler(async(req, res) => {
+const listReports = asyncHandler(async (req, res) => {
     const page = parseInt(req.query.page || '1', 10);
     const limit = parseInt(req.query.limit || '20', 10);
     const status = req.query.status || null;
@@ -43,7 +43,7 @@ const listReports = asyncHandler(async(req, res) => {
     );
 });
 
-const updateReportStatus = asyncHandler(async(req, res) => {
+const updateReportStatus = asyncHandler(async (req, res) => {
     const id = parseInt(req.params.id, 10);
     const r = await reportService.updateReportStatus(
         id,
@@ -54,12 +54,12 @@ const updateReportStatus = asyncHandler(async(req, res) => {
     return success(res, 200, r, 'Report updated.');
 });
 
-const stats = asyncHandler(async(_req, res) => {
+const stats = asyncHandler(async (_req, res) => {
     const data = await adminService.getStats();
     return success(res, 200, data, 'Platform stats.');
 });
 
-const listAllItems = asyncHandler(async(req, res) => {
+const listAllItems = asyncHandler(async (req, res) => {
     const page = parseInt(req.query.page || '1', 10);
     const limit = parseInt(req.query.limit || '20', 10);
     const result = await adminService.listAllItems({
@@ -77,7 +77,7 @@ const listAllItems = asyncHandler(async(req, res) => {
     );
 });
 
-const removeItem = asyncHandler(async(req, res) => {
+const removeItem = asyncHandler(async (req, res) => {
     const id = parseInt(req.params.id, 10);
     const item = await adminService.removeItem(id);
     return success(res, 200, item, 'Item removed.');

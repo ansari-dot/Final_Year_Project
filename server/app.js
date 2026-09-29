@@ -9,6 +9,7 @@ const corsMiddleware = require('./middleware/corsMiddleware');
 const { standardLimiter } = require('./middleware/rateLimiter');
 const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
 const apiRoutes = require('./routes');
+const passport = require('./config/passport');
 
 const app = express();
 
@@ -19,6 +20,7 @@ app.set('trust proxy', 1);
 app.use(corsMiddleware);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(passport.initialize());
 
 // HTTP request logging
 if (env.isDevelopment) {

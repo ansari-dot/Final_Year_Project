@@ -43,7 +43,12 @@ const resendVerification = asyncHandler(async (req, res) => {
 
 const forgotPassword = asyncHandler(async (req, res) => {
   await authService.forgotPassword(req.body.email);
-  return success(res, 200, null, 'If an account exists, a reset email was sent.');
+  return success(res, 200, null, 'If an account exists, a reset OTP was sent.');
+});
+
+const verifyResetOtp = asyncHandler(async (req, res) => {
+  const result = await authService.verifyResetOtp(req.body.email, req.body.otp);
+  return success(res, 200, result, 'OTP verified. You can now reset your password.');
 });
 
 const resetPassword = asyncHandler(async (req, res) => {
@@ -70,6 +75,22 @@ const me = asyncHandler(async (req, res) => {
   return success(res, 200, req.user.toJSON(), 'Current user.');
 });
 
+const googleCallback = asyncHandler(async (req, res) => {
+  if (!req.user) {
+    return res.redirect(`${require('../config/env').clientUrl}/login?error=Google authentication failed`);
+  }
+  
+  const authResponse = authService.buildAuthResponse(req.user);
+  
+  // The existing frontend architecture uses Bearer tokens in localStorage,
+  // so we pass them to a dedicated frontend success route to save them.
+  const redirectUrl = new URL(`${require('../config/env').clientUrl}/auth/success`);
+  redirectUrl.searchParams.set('accessToken', authResponse.accessToken);
+  redirectUrl.searchParams.set('refreshToken', authResponse.refreshToken);
+  
+  res.redirect(redirectUrl.toString());
+});
+
 module.exports = {
   register,
   login,
@@ -79,8 +100,10 @@ module.exports = {
   verifyEmail,
   resendVerification,
   forgotPassword,
+  verifyResetOtp,
   resetPassword,
   refresh,
   changePassword,
   me,
+  googleCallback,
 };

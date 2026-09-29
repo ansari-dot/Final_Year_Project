@@ -4,7 +4,7 @@ import { ArrowRight, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
-import { ApiError } from '../lib/api/client';
+import { ApiError, API_URL } from '../lib/api/client';
 
 export default function Login() {
   const { signIn } = useAuth();
@@ -79,9 +79,9 @@ export default function Login() {
                 <label className="text-[11px] sm:text-sm font-bold uppercase tracking-wider text-primary/80" htmlFor="password">
                   Password
                 </label>
-                <a href="#" className="text-[11px] sm:text-xs font-semibold text-accent hover:text-accent/80 transition-colors">
+                <Link href="/forgot-password" className="text-[11px] sm:text-xs font-semibold text-accent hover:text-accent/80 transition-colors">
                   Forgot Password?
-                </a>
+                </Link>
               </div>
               <div className="relative">
                 <input
@@ -137,7 +137,7 @@ export default function Login() {
 
           <button
             type="button"
-            onClick={() => toast('Google sign-in is coming soon.', 'info')}
+            onClick={() => window.location.href = `${API_URL}/auth/google`}
             className="w-full mt-6 sm:mt-8 bg-background border border-border/60 hover:bg-muted/30 text-primary py-3.5 sm:py-4 rounded-xl font-bold uppercase tracking-widest text-xs sm:text-sm transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-3"
           >
             <svg viewBox="0 0 24 24" className="w-5 h-5">

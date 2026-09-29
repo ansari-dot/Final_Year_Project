@@ -44,6 +44,12 @@ const env = {
     refreshExpiresIn: required('JWT_REFRESH_EXPIRES_IN', '7d'),
   },
 
+  google: {
+    clientId: required('GOOGLE_CLIENT_ID', ''),
+    clientSecret: required('GOOGLE_CLIENT_SECRET', ''),
+    callbackUrl: required('GOOGLE_CALLBACK_URL', 'http://localhost:5000/api/v1/auth/google/callback'),
+  },
+
   bcrypt: {
     saltRounds: parseInt(required('BCRYPT_SALT_ROUNDS', '12'), 10),
   },

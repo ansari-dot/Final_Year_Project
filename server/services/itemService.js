@@ -11,6 +11,8 @@ const {
 } = require('../models');
 const ApiError = require('../utils/ApiError');
 const cloudinaryService = require('./cloudinaryService');
+const { generateAndStoreItemEmbedding } = require('./nlpSearchService');
+const logger = require('../utils/logger');
 
 const includeOwnerAndImages = [
   {
@@ -54,7 +56,14 @@ const createItem = async (userId, itemData, files = []) => {
 
     await ItemFeatures.create({ itemId: item.id }, { transaction: t });
     return item;
-  }).then((item) => getItemById(item.id));
+  }).then(async (item) => {
+    const fullItem = await getItemById(item.id);
+    // Fire-and-forget: generate MiniLM embedding and store in item_features.text_vector
+    generateAndStoreItemEmbedding(fullItem).catch((e) =>
+      logger.warn(`[ITEM] Embedding generation skipped for new item ${fullItem.id}: ${e.message}`)
+    );
+    return fullItem;
+  });
 };
 
 const getItemById = async (itemId) => {
@@ -89,7 +98,16 @@ const updateItem = async (itemId, userId, updates) => {
     if (updates[k] !== undefined) data[k] = updates[k];
   });
   await item.update(data);
-  return getItemById(itemId);
+  const updatedItem = await getItemById(itemId);
+  // Fire-and-forget: regenerate embedding when semantic fields change
+  const semanticFields = ['title', 'description', 'categoryId', 'brand', 'gender', 'color', 'condition'];
+  const semanticChanged = semanticFields.some((f) => data[f] !== undefined);
+  if (semanticChanged) {
+    generateAndStoreItemEmbedding(updatedItem).catch((e) =>
+      logger.warn(`[ITEM] Embedding regeneration skipped for item ${itemId}: ${e.message}`)
+    );
+  }
+  return updatedItem;
 };
 
 const deleteItem = async (itemId, userId) => {

@@ -58,7 +58,20 @@ export const itemsApi = {
 
   setPrimary: (itemId: string | number, imgId: string | number) =>
     request<ApiItem>(`/items/${itemId}/images/${imgId}/primary`, { method: 'PUT' }),
+
+  visualSearch: (file: File, categoryId?: number | string) => {
+    const fd = new FormData();
+    fd.append('image', file);
+    if (categoryId) fd.append('category_id', String(categoryId));
+    return http.upload<{
+      success: boolean;
+      request_id: string;
+      query_attributes: Record<string, any>;
+      results: Array<any>;
+    }>('/search/visual', fd);
+  },
 };
+
 
 export const categoriesApi = {
   list: () => http.get<ApiCategory[]>('/categories'),

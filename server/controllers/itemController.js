@@ -90,6 +90,21 @@ const setPrimaryImage = asyncHandler(async (req, res) => {
 const search = asyncHandler(async (req, res) => {
   const page = parseInt(req.query.page || '1', 10);
   const limit = parseInt(req.query.limit || '20', 10);
+
+  if (req.query.q) {
+    const nlpService = require('../services/nlpSearchService');
+    const nlpResults = await nlpService.nlpSearch(req.query.q, req.user?.id, limit);
+    if (nlpResults) {
+      return paginated(
+        res,
+        200,
+        nlpResults,
+        buildPagination(nlpResults.length, page, limit),
+        'NLP search results.'
+      );
+    }
+  }
+
   const filters = {
     q: req.query.q,
     categoryId: req.query.categoryId ? parseInt(req.query.categoryId, 10) : undefined,

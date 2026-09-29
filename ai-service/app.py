@@ -1,13 +1,17 @@
+import sys
+import os
+os.environ["HF_HOME"] = os.getenv("HF_HOME", r"E:\.cache\huggingface")
+
 from flask import Flask, jsonify
 from flask_cors import CORS
 from flask_restx import Api, Resource, fields
 import logging
-import sys
-import os
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+
 from config import Config
+from models.distilbert_loader import MiniLMLoader
 from services.nlp_service import NLService
 from services.similarity_service import SimilarityService
 
@@ -20,6 +24,20 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger(__name__)
+
+# ── Eager model warm-up ─────────────────────────────────────────────────────
+# Load the model once at startup so the first HTTP request isn't slow.
+# Also logs confirmed model name and embedding dimension for verification.
+logger.info("=" * 60)
+logger.info("ReWearX AI Service starting...")
+logger.info(f"Configured model: {Config.MODEL_NAME}")
+try:
+    _loader = MiniLMLoader()
+    _test   = _loader.embed_one("warm up")
+    logger.info(f"Model loaded OK — embedding dimension: {len(_test)}")
+except Exception as _e:
+    logger.error(f"Model warm-up FAILED: {_e}")
+logger.info("=" * 60)
 
 def create_app():
     app = Flask(__name__)

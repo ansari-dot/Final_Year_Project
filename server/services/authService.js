@@ -162,17 +162,35 @@ const forgotPassword = async (email) => {
     return { sent: false };
   }
 
-  const resetToken = randomToken(32);
-  user.resetToken = hashToken(resetToken);
-  user.resetExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  const otp = String(Math.floor(100000 + Math.random() * 900000));
+  user.resetToken = hashToken(otp);
+  user.resetExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
   await user.save();
 
-  const resetUrl = `${env.clientUrl}/reset-password/${resetToken}`;
-  await emailService.sendPasswordResetEmail(email, user.name, resetUrl).catch((err) => {
-    logger.error(`Password reset email failed for ${email}: ${err.message}`);
+  await emailService.sendOtpEmail(email, user.name, otp).catch((err) => {
+    logger.error(`Password reset OTP email failed for ${email}: ${err.message}`);
   });
 
   return { sent: true };
+};
+
+const verifyResetOtp = async (email, otp) => {
+  const user = await User.scope('withPassword').findOne({
+    where: {
+      email,
+      resetToken: hashToken(otp),
+      resetExpires: { [Op.gt]: new Date() },
+    },
+  });
+  if (!user) throw ApiError.badRequest('Invalid or expired OTP.');
+
+  // Generate a temporary token for the actual reset step
+  const resetToken = randomToken(32);
+  user.resetToken = hashToken(resetToken);
+  user.resetExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+  await user.save();
+
+  return { resetToken };
 };
 
 const resetPassword = async (rawToken, newPassword) => {
@@ -215,6 +233,39 @@ const changePassword = async (userId, currentPassword, newPassword) => {
   return true;
 };
 
+const findOrCreateGoogleUser = async ({ googleId, email, name, avatar }) => {
+  let user = await User.scope('withPassword').findOne({ where: { googleId } });
+  if (user) {
+    user.lastLoginAt = new Date();
+    await user.save();
+    return user;
+  }
+
+  user = await User.scope('withPassword').findOne({ where: { email } });
+  if (user) {
+    if (user.googleId !== googleId) {
+      throw ApiError.conflict('An account with this email already exists. Please log in normally to link your Google account.');
+    }
+    return user;
+  }
+
+  try {
+    user = await User.create({
+      googleId,
+      email,
+      name,
+      profileImage: avatar,
+      authProvider: 'google',
+      isVerified: true,
+    });
+    await UserPreferences.create({ userId: user.id });
+    return user;
+  } catch (err) {
+    logger.error(`User.create failed during Google OAuth for ${email}: ${err.message}`);
+    throw err;
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -223,7 +274,10 @@ module.exports = {
   verifyEmail,
   resendVerification,
   forgotPassword,
+  verifyResetOtp,
   resetPassword,
   refreshAccessToken,
   changePassword,
+  findOrCreateGoogleUser,
+  buildAuthResponse,
 };

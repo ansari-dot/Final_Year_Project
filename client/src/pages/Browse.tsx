@@ -256,11 +256,10 @@ export default function Browse() {
                     }
                     setPage(1);
                   }}
-                  className={`px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all ${
-                    active
+                  className={`px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all ${active
                       ? 'bg-accent text-accent-foreground shadow-md'
                       : 'bg-white/10 hover:bg-white/20 text-white border border-white/20'
-                  }`}
+                    }`}
                 >
                   {c}
                 </button>

@@ -16,11 +16,13 @@ module.exports = (sequelize) => {
         unique: true,
         validate: { isEmail: true },
       },
-      password: { type: DataTypes.STRING(255), allowNull: false },
+      password: { type: DataTypes.STRING(255), allowNull: true },
+      googleId: { type: DataTypes.STRING(255), allowNull: true, unique: true, field: 'google_id' },
+      authProvider: { type: DataTypes.STRING(30), allowNull: true, defaultValue: 'local', field: 'auth_provider' },
       phone: { type: DataTypes.STRING(20), allowNull: true },
       profileImage: { type: DataTypes.STRING(500), allowNull: true, field: 'profile_image' },
       bio: { type: DataTypes.TEXT, allowNull: true },
-      gender: { type: DataTypes.ENUM('male', 'female', 'other'), allowNull: false },
+      gender: { type: DataTypes.ENUM('male', 'female', 'other'), allowNull: true },
       location: { type: DataTypes.STRING(150), allowNull: true, defaultValue: 'Islamabad' },
       address: { type: DataTypes.TEXT, allowNull: true },
       dateOfBirth: { type: DataTypes.DATEONLY, allowNull: true, field: 'date_of_birth' },
@@ -87,12 +89,13 @@ module.exports = (sequelize) => {
   });
 
   User.beforeUpdate(async (user) => {
-    if (user.changed('password') && !user.password.startsWith('$2')) {
+    if (user.password && user.changed('password') && !user.password.startsWith('$2')) {
       user.password = await bcrypt.hash(user.password, env.bcrypt.saltRounds);
     }
   });
 
   User.prototype.comparePassword = async function (plain) {
+    if (!this.password) return false;
     return bcrypt.compare(plain, this.password);
   };
 

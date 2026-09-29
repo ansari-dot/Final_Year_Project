@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { 
   Instagram, 
   Twitter, 
@@ -5,6 +6,8 @@ import {
   Linkedin 
 } from 'lucide-react';
 import { Link } from 'wouter';
+import { categoriesApi } from '../../lib/api';
+import type { ApiCategory } from '../../lib/api/types';
 import logoImg from '@/assets/logo.png';
 
 const POPULAR_HUBS = [
@@ -21,8 +24,21 @@ const POPULAR_HUBS = [
 ];
 
 export default function Footer() {
+  const [categories, setCategories] = useState<ApiCategory[]>([]);
+
+  useEffect(() => {
+    categoriesApi
+      .list()
+      .then((data) => {
+        // Only show top-level categories, up to 8 of them
+        const topLevel = data.filter((c) => !c.parentId).slice(0, 8);
+        setCategories(topLevel);
+      })
+      .catch((err) => console.error('Failed to load footer categories', err));
+  }, []);
+
   return (
-    <footer className="bg-[#F4EFE6] text-[#1E1B18] font-body border-t border-[#E5DFD3] relative z-10">
+    <footer className="bg-[#F4EFE6] text-[#1E1B18] font-body border-t border-[#E5DFD3]">
       
       {/* ── MAIN FOOTER CONTENT ── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-16">
@@ -91,29 +107,18 @@ export default function Footer() {
               Marketplace
             </h4>
             <ul className="space-y-2 text-xs sm:text-sm text-[#7D7265]">
+              {categories.map((category) => (
+                <li key={category.id}>
+                  <Link href={`/browse?category=${category.name}`} className="hover:text-[#1E1B18] transition-colors">
+                    {category.name}
+                  </Link>
+                </li>
+              ))}
+              {categories.length === 0 && (
+                <li>Loading categories...</li>
+              )}
               <li>
-                <Link href="/browse?category=Women" className="hover:text-[#1E1B18] transition-colors">Women&apos;s Fashion</Link>
-              </li>
-              <li>
-                <Link href="/browse?category=Men" className="hover:text-[#1E1B18] transition-colors">Men&apos;s Apparel</Link>
-              </li>
-              <li>
-                <Link href="/browse?category=Tech" className="hover:text-[#1E1B18] transition-colors">Mobiles & Tech</Link>
-              </li>
-              <li>
-                <Link href="/browse?category=Footwear" className="hover:text-[#1E1B18] transition-colors">Footwear & Sneakers</Link>
-              </li>
-              <li>
-                <Link href="/browse?category=Jewelry" className="hover:text-[#1E1B18] transition-colors">Watches & Jewelry</Link>
-              </li>
-              <li>
-                <Link href="/browse?category=Bags" className="hover:text-[#1E1B18] transition-colors">Bags & Luggage</Link>
-              </li>
-              <li>
-                <Link href="/browse?category=Vintage" className="hover:text-[#1E1B18] transition-colors">Vintage Archive</Link>
-              </li>
-              <li>
-                <Link href="/browse?filter=free" className="hover:text-[#1E1B18] transition-colors">Free Drops</Link>
+                <Link href="/browse?filter=free" className="hover:text-[#1E1B18] transition-colors mt-2 block">Free Drops</Link>
               </li>
             </ul>
           </div>

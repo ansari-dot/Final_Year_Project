@@ -4,9 +4,10 @@ const router = require('express').Router();
 const itemController = require('../controllers/itemController');
 const validators = require('../utils/validators');
 const { authenticate, optionalAuth } = require('../middleware/authMiddleware');
-const { uploadMultiple } = require('../middleware/uploadMiddleware');
+const { uploadSingle, uploadMultiple } = require('../middleware/uploadMiddleware');
 
 router.get('/', optionalAuth, validators.itemSearch, itemController.list);
+
 router.get('/user/:userId', validators.idParamRule('userId'), itemController.getByUser);
 router.get('/:id', optionalAuth, validators.idParamRule('id'), itemController.getOne);
 

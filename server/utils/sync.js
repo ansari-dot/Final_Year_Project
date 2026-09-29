@@ -28,8 +28,8 @@ const run = async () => {
     }
     process.exit(0);
   } catch (err) {
-    logger.error('Sync failed:', err.message);
-    if (err.parent) logger.error('Cause:', err.parent.message);
+    logger.error('Sync failed:', err);
+    if (err.parent) logger.error('Cause:', err.parent);
     process.exit(1);
   }
 };

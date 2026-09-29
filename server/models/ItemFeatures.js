@@ -23,6 +23,16 @@ module.exports = (sequelize) => {
                 allowNull: true,
                 field: 'extracted_style',
             },
+            embeddingStatus: {
+                type: DataTypes.ENUM('pending', 'processing', 'completed', 'failed'),
+                defaultValue: 'pending',
+                field: 'embedding_status',
+            },
+            embeddingError: {
+                type: DataTypes.TEXT,
+                allowNull: true,
+                field: 'embedding_error',
+            },
             processedAt: { type: DataTypes.DATE, allowNull: true, field: 'processed_at' },
         }, { tableName: 'item_features', indexes: [{ fields: ['item_id'], unique: true }] }
     );
